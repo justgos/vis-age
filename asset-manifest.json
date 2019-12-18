@@ -1,0 +1,22 @@
+{
+  "files": {
+    "main.css": "/vis-age/static/css/main.21833120.chunk.css",
+    "main.js": "/vis-age/static/js/main.81186de0.chunk.js",
+    "main.js.map": "/vis-age/static/js/main.81186de0.chunk.js.map",
+    "runtime-main.js": "/vis-age/static/js/runtime-main.c6accaa8.js",
+    "runtime-main.js.map": "/vis-age/static/js/runtime-main.c6accaa8.js.map",
+    "static/js/2.fdfe46c7.chunk.js": "/vis-age/static/js/2.fdfe46c7.chunk.js",
+    "static/js/2.fdfe46c7.chunk.js.map": "/vis-age/static/js/2.fdfe46c7.chunk.js.map",
+    "index.html": "/vis-age/index.html",
+    "precache-manifest.a1a24e0fbcc4ccc540825502b62351ea.js": "/vis-age/precache-manifest.a1a24e0fbcc4ccc540825502b62351ea.js",
+    "service-worker.js": "/vis-age/service-worker.js",
+    "static/css/main.21833120.chunk.css.map": "/vis-age/static/css/main.21833120.chunk.css.map",
+    "static/js/2.fdfe46c7.chunk.js.LICENSE": "/vis-age/static/js/2.fdfe46c7.chunk.js.LICENSE"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.c6accaa8.js",
+    "static/js/2.fdfe46c7.chunk.js",
+    "static/css/main.21833120.chunk.css",
+    "static/js/main.81186de0.chunk.js"
+  ]
+}
