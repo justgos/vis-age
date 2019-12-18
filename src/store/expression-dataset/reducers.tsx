@@ -42,6 +42,8 @@ export const expressionDatasetReducer = (
       state.crossfilter = crossfilter(state.raw);
       state.textDimensions = state.crossfilter.dimension(r => [
         r.gene,
+        r.uniprot_mouse,
+        r.uniprot_daphnia,
         r.sex,
         r.tissue,
         r.subtissue,
