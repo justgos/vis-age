@@ -24,6 +24,9 @@ export type ExpressionDataRow = {
   fold_change_log2 : number;
   p_value : number;
 
+  uniprot_mouse : string;
+  uniprot_daphnia : string;
+
   // x : number;
   // y : number;
   // fill : string;

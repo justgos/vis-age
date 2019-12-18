@@ -24,13 +24,14 @@ const connector = connect(
 );
 
 function App({ updateDataset } : Partial<ConnectedProps<typeof connector>>) {
+  const [ loading, setLoading ] = useState(true);
   useEffect(() => {
     const loadData = async () => {
       const csvData : CsvParseResult = await new Promise(
         function(complete, error) {
           Papa.parse(
-            // '/data/facs-18m-24m-cell_ontology_class.csv', 
-            '/data/merged.csv', 
+            // './data/facs-18m-24m-cell_ontology_class.csv', 
+            './data/merged_augmented.csv', 
             {
               delimiter: ',',
               header: true,
@@ -43,6 +44,7 @@ function App({ updateDataset } : Partial<ConnectedProps<typeof connector>>) {
       });
       if(updateDataset)
         updateDataset(csvData.data as ExpressionDataRow[]);
+      setLoading(false);
     };
     loadData();
   }, []);
@@ -113,6 +115,11 @@ function App({ updateDataset } : Partial<ConnectedProps<typeof connector>>) {
           </SceneController>
         </Canvas>
       </div>
+      {loading && 
+        <div className="loading">
+          <div className="lds-ripple"><div></div><div></div></div>
+        </div>
+      }
     </div>
   );
 }

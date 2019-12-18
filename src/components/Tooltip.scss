@@ -7,17 +7,23 @@
     z-index: 10000;
 
     .gene-name {
+        display: inline-block;
         font-weight: 600;
     }
 
     .prop {
         display: flex;
+        margin-top: .1rem;
         flex-direction: row;
         flex-wrap: nowrap;
         flex-grow: 0;
 
         & > * {
             flex-grow: 1;
+        }
+
+        &:first {
+            margin-top: 0m;
         }
 
         .name {
@@ -29,7 +35,7 @@
 
         .value {
             display: inline-block;
-            width: 150px;
+            width: 200px;
             margin-left: .5rem;
         }
     }

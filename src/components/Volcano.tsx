@@ -125,7 +125,7 @@ export const Volcano = () => {
   const [pointShader] = useMemo(() => {
     const loader = new THREE.TextureLoader();
     const pointShader = new PointShader({
-      pointTexture: loader.load('/textures/circle.png'),
+      pointTexture: loader.load('./textures/circle.png'),
     });
     return [pointShader]
   }, []);
@@ -155,11 +155,27 @@ export const Volcano = () => {
           <>
             <div className="prop">
               <div className="name">Gene</div>
-              <div className="value"><div className="gene-name">{row.gene}</div></div>
+              <div className="value">
+                <div className="gene-name">{row.gene}</div> (
+                <a href={"https://www.uniprot.org/uniprot/" + row.uniprot_mouse} target="_blank" rel="noopener noreferrer">
+                  {row.uniprot_mouse}
+                </a>
+                )
+              </div>
+            </div>
+            <div className="prop">
+              <div className="name">Closest Daphnia homolog</div>
+              <div className="value">
+                <a href={"https://www.uniprot.org/uniprot/" + row.uniprot_daphnia} target="_blank" rel="noopener noreferrer">
+                  {row.uniprot_daphnia}
+                </a>
+              </div>
             </div>
             <div className="prop">
               <div className="name">Fold-change</div>
-              <div className="value">{row.fold_change_log2.toFixed(2)}</div>
+              <div className="value" style={{ color: row.fold_change_log2 > 0 ? "#fb6542" : "#375e97" }}>
+                {row.fold_change_log2.toFixed(2)}
+              </div>
             </div>
             <div className="prop">
               <div className="name">p-value</div>
