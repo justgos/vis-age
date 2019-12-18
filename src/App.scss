@@ -1,3 +1,8 @@
+html,
+body {
+  overflow: hidden;
+}
+
 .App {
   text-align: center;
 }
@@ -34,5 +39,22 @@
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+.main-canvas {
+  position: absolute;
+  width: 100%;
+  height: 100vh;
+}
+
+.filter-panel {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  z-index: 100;
+
+  .text-filter {
+    width: 150px;
   }
 }

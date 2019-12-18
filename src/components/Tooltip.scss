@@ -1,0 +1,36 @@
+.tooltip {
+    position: absolute;
+    padding: .5rem 1rem;
+    background: #fff;
+    border: #aaa solid 1px;
+    text-align: left;
+    z-index: 10000;
+
+    .gene-name {
+        font-weight: 600;
+    }
+
+    .prop {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        flex-grow: 0;
+
+        & > * {
+            flex-grow: 1;
+        }
+
+        .name {
+            display: inline-block;
+            width: 100px;
+            font-weight: 600;
+            color: #aaa;
+        }
+
+        .value {
+            display: inline-block;
+            width: 150px;
+            margin-left: .5rem;
+        }
+    }
+}

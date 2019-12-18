@@ -1,0 +1,232 @@
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import * as THREE from 'three';
+import { useThree, useFrame } from 'react-three-fiber';
+import { connect, ConnectedProps  } from 'react-redux';
+import RBush from 'rbush';
+import knn from 'rbush-knn';
+
+import { store } from '../store';
+import { updateTooltip } from '../store/tooltip/actions'
+import { PointShader } from '../shaders/PointShader';
+import { ExpressionDataRow } from '../core/types';
+
+// const VolcanoTooltip = ({ active, payload } : TooltipProps) => {
+//   if(payload.length < 1) {
+//     return (<></>);
+//   }
+
+//   return (
+//     <div className="custom-tooltip">
+//       <div className="gene-name">{payload[0].payload.gene}</div>
+//       <div className="prop">
+//         <div className="name">Fold-change</div>
+//         <div className="value">{payload[0].payload.fold_change_log2.toFixed(2)}</div>
+//       </div>
+//     </div>
+//   );
+// };
+
+export const Volcano = () => {
+  const {
+    mouse,
+    camera,
+    size: { width, height },
+  } = useThree();
+  
+  const [ expressionDataset, setExpressionDataset ] = useState({...store.getState().expressionDataset});
+  const updateExpressionDataset = () => {
+    // if(store.getState().expressionDataset.lastUpdateTime <= expressionDataset.lastUpdateTime)
+    //   return;
+    // console.log(store.getState().expressionDataset.lastUpdateTime, expressionDataset)
+    // console.log('updateExpressionDataset', store.getState().expressionDataset)
+    setExpressionDataset({...store.getState().expressionDataset});
+  };
+  useEffect(() => {
+    store.subscribe(() => {
+      updateExpressionDataset();
+    });
+    updateExpressionDataset();
+  }, []);
+
+  const xpos = (row : ExpressionDataRow) => 
+    row.fold_change_log2 * 25.0;
+  const ypos = (row : ExpressionDataRow) => 
+    (-Math.log(Math.max(row.p_value, 1e-300))) * 0.9;
+
+  const posAttr = useRef<THREE.BufferAttribute>();
+  const sizeAttr = useRef<THREE.BufferAttribute>();
+  // Setup point attribute buffers
+  const [ positions, sizes, colors, pointTree ] = useMemo(
+    () => {
+      console.log('expressionDataset.raw.length', expressionDataset.raw.length)
+      let positions = [];
+      for(let i = 0; i < expressionDataset.raw.length * 3; i+=3) {
+        let row = expressionDataset.raw[i / 3];
+        positions.push(
+          xpos(row),
+          ypos(row),
+          0
+        );
+      }
+      let sizes = [];
+      // Init sizes to zero
+      for(let i = 0; i < expressionDataset.raw.length; i+=1) {
+        sizes.push(1.0);
+      }
+      let colors = [];
+      const warmColor = [251.0 / 255, 101.0 / 255, 66.0 / 255];
+      const coldColor = [55.0 / 255, 94.0 / 255, 151.0 / 255];
+      for(let i = 0; i < expressionDataset.raw.length * 4; i+=4) {
+        let row = expressionDataset.raw[i / 4];
+        if(row.fold_change_log2 > 0)
+          colors.push(...warmColor, 1.0);
+        else
+          colors.push(...coldColor, 1.0);
+      }
+      return [ 
+        new Float32Array(positions), 
+        new Float32Array(sizes), 
+        new Float32Array(colors), 
+        new RBush() 
+      ];
+    },
+    [expressionDataset.lastUpdateTime, expressionDataset.raw]
+  );
+  useEffect(
+    () => {
+      if(!sizeAttr.current)
+        return;
+      let sizes = [];
+      // Init sizes to zero
+      for(let i = 0; i < expressionDataset.raw.length; i+=1) {
+        sizes.push(0.2);
+      }
+      // console.log('filtered expressionDataset.raw.length', expressionDataset.raw.length)
+      // Set non-zeros sizes for the filtered points
+      for(let i = 0; i < expressionDataset.filtered.length; i+=1) {
+        let row = expressionDataset.filtered[i];
+        sizes[row.__id] = 1.0;
+      }
+      sizeAttr.current.array = new Float32Array(sizes);
+      sizeAttr.current.needsUpdate = true;
+
+      pointTree.clear();
+      pointTree.load(expressionDataset.filtered.map(r => { return { 
+        minX: xpos(r)-1, 
+        minY: ypos(r)-1, 
+        maxX: xpos(r)+1, 
+        maxY: ypos(r)+1,
+        ...r 
+      }}));
+    },
+    [expressionDataset.filtered]
+  );
+
+  const [pointShader] = useMemo(() => {
+    const loader = new THREE.TextureLoader();
+    const pointShader = new PointShader({
+      pointTexture: loader.load('/textures/circle.png'),
+    });
+    return [pointShader]
+  }, []);
+
+  const lastTargetId = useMemo(() => {
+    return {
+      value: 0,
+    }
+  }, []);
+  const dashForNan = (val : string) => (val && val !== '' && val !== 'nan') ? val : '—';
+  useFrame(() => {
+    let mx = (mouse.x * 0.5) * width / camera.zoom + camera.position.x;
+    let my = (mouse.y * 0.5) * height / camera.zoom + camera.position.y;
+    let nearest = knn(
+      pointTree, 
+      mx, 
+      my, 
+      1
+    );
+    if(nearest.length > 0) {
+      let row = nearest[0];
+      if(row.__id !== lastTargetId.value) {
+        // console.log('updateTooltip', row)
+        store.dispatch(updateTooltip(
+          ((row.maxX + row.minX) / 2 - camera.position.x) * camera.zoom + width / 2,
+          height / 2 - ((row.minY + row.maxY) / 2 - camera.position.y) * camera.zoom,
+          <>
+            <div className="prop">
+              <div className="name">Gene</div>
+              <div className="value"><div className="gene-name">{row.gene}</div></div>
+            </div>
+            <div className="prop">
+              <div className="name">Fold-change</div>
+              <div className="value">{row.fold_change_log2.toFixed(2)}</div>
+            </div>
+            <div className="prop">
+              <div className="name">p-value</div>
+              <div className="value">{row.p_value.toExponential(6)}</div>
+            </div>
+            <div className="prop">
+              <div className="name">Sex</div>
+              <div className="value">{row.sex}</div>
+            </div>
+            <div className="prop">
+              <div className="name">Tissue</div>
+              <div className="value">{dashForNan(row.tissue)}</div>
+            </div>
+            <div className="prop">
+              <div className="name">Subtissue</div>
+              <div className="value">{dashForNan(row.subtissue)}</div>
+            </div>
+            <div className="prop">
+              <div className="name">Cell type</div>
+              <div className="value">{dashForNan(row.cell_ontology_class)}</div>
+            </div>
+          </>
+        ));
+        lastTargetId.value = row.__id;
+      }
+      // console.log(nearest[0].gene, mx, my);
+    }
+  });
+
+  if(positions.length < 1) {
+    return (
+      <>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <points 
+        frustumCulled={false}
+        material={pointShader}>
+        <bufferGeometry attach="geometry">
+          <bufferAttribute
+            attachObject={['attributes', 'position']}
+            count={positions.length / 3}
+            array={positions}
+            itemSize={3}
+            ref={posAttr}
+          />
+          <bufferAttribute
+            attachObject={['attributes', 'size']}
+            count={sizes.length}
+            array={sizes}
+            itemSize={1}
+            ref={sizeAttr}
+          />
+          <bufferAttribute
+            attachObject={['attributes', 'color']}
+            count={colors.length / 4}
+            array={colors}
+            itemSize={4}
+            // ref={colorAttr}
+          />
+        </bufferGeometry>
+      </points>
+    </>
+  );
+};
+
+export default Volcano;
