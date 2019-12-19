@@ -30,7 +30,6 @@
     "react-three-fiber": "^3.0.16",
     "react-use-gesture": "^6.0.14",
     "redux": "^4.0.4",
-    "serialize-javascript": "^2.1.2",
     "three": "^0.111.0",
     "ts-jest": "^24.2.0",
     "typescript": "^3.7.3"
