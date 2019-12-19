@@ -175,12 +175,12 @@ export const Volcano = () => {
             <div className="prop">
               <div className="name">log<sub>2</sub>(Fold-change)</div>
               <div className="value" style={{ color: row.fold_change_log2 > 0 ? "#fb6542" : "#375e97" }}>
-                {row.fold_change_log2.toFixed(2)}
+                {row.fold_change_log2?.toFixed(2)}
               </div>
             </div>
             <div className="prop">
               <div className="name">p-value</div>
-              <div className="value">{row.p_value.toExponential(6)}</div>
+              <div className="value">{row.p_value?.toExponential(6)}</div>
             </div>
             <div className="prop">
               <div className="name">Start age</div>
