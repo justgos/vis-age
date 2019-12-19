@@ -74,7 +74,6 @@ export const expressionDatasetReducer = (
       return {...state};
     case UPDATE_FILTER:
       let a = (action as UpdateExpressionDatasetTextFilterAction);
-      console.log(UPDATE_FILTER, a.name, a.value)
       state.filterValues.set(a.name, a.value);
       state = onDatasetFilterChanged(state);
       return {...state};
