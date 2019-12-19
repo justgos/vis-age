@@ -1,3 +1,5 @@
+@import '~@blueprintjs/core/lib/css/blueprint.css';
+
 html,
 body {
   overflow: hidden;
@@ -46,17 +48,6 @@ body {
   position: absolute;
   width: 100%;
   height: 100vh;
-}
-
-.filter-panel {
-  position: absolute;
-  top: 0;
-  width: 100%;
-  z-index: 100;
-
-  .text-filter {
-    width: 150px;
-  }
 }
 
 

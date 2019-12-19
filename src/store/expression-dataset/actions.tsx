@@ -3,7 +3,8 @@ import {
   UpdateExpressionDatasetAction, 
   UpdateExpressionDatasetTextFilterAction, 
   UPDATE_DATASET, 
-  UPDATE_TEXT_FILTER 
+  UPDATE_FILTER,
+  FilterValueType,
 } from './types'
 
 export const updateDataset = (dataset : ExpressionDataRow[]) : UpdateExpressionDatasetAction => {
@@ -13,9 +14,10 @@ export const updateDataset = (dataset : ExpressionDataRow[]) : UpdateExpressionD
   }
 };
 
-export const updateTextFilter = (filter : string) : UpdateExpressionDatasetTextFilterAction => {
+export const updateFilter = (name : string, value : FilterValueType) : UpdateExpressionDatasetTextFilterAction => {
   return {
-    type: UPDATE_TEXT_FILTER,
-    filter,
+    type: UPDATE_FILTER,
+    name,
+    value,
   }
 };

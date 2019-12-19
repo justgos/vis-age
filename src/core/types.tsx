@@ -15,19 +15,17 @@ export interface CsvParseResult {
 };
 
 export type ExpressionDataRow = {
-  __id : number;
-  sex : string;
-  tissue : string;
-  subtissue : string;
-  cell_ontology_class : string;
-  gene : string;
-  fold_change_log2 : number;
-  p_value : number;
+  __id? : number;
+  start_age? : string;
+  end_age? : string;
+  sex? : string;
+  tissue? : string;
+  subtissue? : string;
+  cell_ontology_class? : string;
+  gene? : string;
+  fold_change_log2? : number;
+  p_value? : number;
 
-  uniprot_mouse : string;
-  uniprot_daphnia : string;
-
-  // x : number;
-  // y : number;
-  // fill : string;
+  uniprot_mouse? : string;
+  uniprot_daphnia? : string;
 };
