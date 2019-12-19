@@ -30,8 +30,8 @@ function App({ updateDataset } : Partial<ConnectedProps<typeof connector>>) {
       const csvData : CsvParseResult = await new Promise(
         function(complete, error) {
           Papa.parse(
-            // './data/facs-18m-24m-cell_ontology_class.csv', 
-            './data/merged_augmented.csv', 
+            './data/facs-18m-24m-cell_ontology_class.csv', 
+            // './data/merged_augmented.csv', 
             {
               delimiter: ',',
               header: true,

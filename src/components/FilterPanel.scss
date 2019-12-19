@@ -1,0 +1,26 @@
+.filter-panel {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  z-index: 100;
+  padding: .5rem 1rem;
+
+  .filter-element {
+    display: inline-block;
+    margin-left: 1rem;
+    margin-top: auto;
+    margin-bottom: auto;
+
+    &:first {
+      margin-left: 0;
+    }
+  }
+
+  .text-filter {
+    width: 150px;
+  }
+
+  .homolog-filter {
+    padding-left: 34px !important;
+  }
+}

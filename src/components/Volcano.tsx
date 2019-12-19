@@ -49,9 +49,9 @@ export const Volcano = () => {
   }, []);
 
   const xpos = (row : ExpressionDataRow) => 
-    row.fold_change_log2 * 25.0;
+    (row.fold_change_log2 || 0) * 25.0;
   const ypos = (row : ExpressionDataRow) => 
-    (-Math.log(Math.max(row.p_value, 1e-300))) * 0.9;
+    (-Math.log(Math.max(row.p_value || 0, 1e-300))) * 0.9;
 
   const posAttr = useRef<THREE.BufferAttribute>();
   const sizeAttr = useRef<THREE.BufferAttribute>();
@@ -78,7 +78,7 @@ export const Volcano = () => {
       const coldColor = [55.0 / 255, 94.0 / 255, 151.0 / 255];
       for(let i = 0; i < expressionDataset.raw.length * 4; i+=4) {
         let row = expressionDataset.raw[i / 4];
-        if(row.fold_change_log2 > 0)
+        if((row.fold_change_log2 || 0) > 0)
           colors.push(...warmColor, 1.0);
         else
           colors.push(...coldColor, 1.0);
@@ -105,7 +105,8 @@ export const Volcano = () => {
       // Set non-zeros sizes for the filtered points
       for(let i = 0; i < expressionDataset.filtered.length; i+=1) {
         let row = expressionDataset.filtered[i];
-        sizes[row.__id] = 1.0;
+        if(row.__id)
+          sizes[row.__id] = 1.0;
       }
       sizeAttr.current.array = new Float32Array(sizes);
       sizeAttr.current.needsUpdate = true;
@@ -172,7 +173,7 @@ export const Volcano = () => {
               </div>
             </div>
             <div className="prop">
-              <div className="name">Fold-change</div>
+              <div className="name">log<sub>2</sub>(Fold-change)</div>
               <div className="value" style={{ color: row.fold_change_log2 > 0 ? "#fb6542" : "#375e97" }}>
                 {row.fold_change_log2.toFixed(2)}
               </div>
@@ -180,6 +181,14 @@ export const Volcano = () => {
             <div className="prop">
               <div className="name">p-value</div>
               <div className="value">{row.p_value.toExponential(6)}</div>
+            </div>
+            <div className="prop">
+              <div className="name">Start age</div>
+              <div className="value">{row.start_age}</div>
+            </div>
+            <div className="prop">
+              <div className="name">End age</div>
+              <div className="value">{row.end_age}</div>
             </div>
             <div className="prop">
               <div className="name">Sex</div>
