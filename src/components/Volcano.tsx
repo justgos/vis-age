@@ -113,10 +113,10 @@ export const Volcano = () => {
 
       pointTree.clear();
       pointTree.load(expressionDataset.filtered.map(r => { return { 
-        minX: xpos(r)-1, 
-        minY: ypos(r)-1, 
-        maxX: xpos(r)+1, 
-        maxY: ypos(r)+1,
+        minX: xpos(r), 
+        minY: ypos(r), 
+        maxX: xpos(r), 
+        maxY: ypos(r),
         ...r 
       }}));
     },
