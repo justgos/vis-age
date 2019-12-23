@@ -1,21 +1,25 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
+import axios from 'axios';
 import * as THREE from 'three';
 import * as Papa from 'papaparse';
 import { Canvas } from 'react-three-fiber';
 import { useGesture } from 'react-use-gesture'
 
 import { dpi } from './config'
-import { CsvParseResult, ExpressionDataRow } from './core/types'
+import { CsvParseResult, ExpressionDataRow, Pathway, GestureData } from './core/types'
 import { updateDataset } from './store/expression-dataset/actions'
+import { updatePathways } from './store/pathways/actions'
 import Tooltip from './components/Tooltip'
 import FilterPanel from './components/FilterPanel'
 import SceneController from './components/SceneController'
 import Volcano from './components/Volcano'
 import './App.scss';
+import Graph from './components/Graph';
 
 const mapDispatchToProps = {
-  updateDataset: updateDataset
+  updateDataset: updateDataset,
+  updatePathways: updatePathways,
 };
 
 const connector = connect(
@@ -23,27 +27,32 @@ const connector = connect(
   mapDispatchToProps
 );
 
-function App({ updateDataset } : Partial<ConnectedProps<typeof connector>>) {
+function App({ updateDataset, updatePathways } : Partial<ConnectedProps<typeof connector>>) {
   const [ loading, setLoading ] = useState(true);
   useEffect(() => {
     const loadData = async () => {
-      const csvData : CsvParseResult = await new Promise(
-        function(complete, error) {
-          Papa.parse(
-            // './data/facs-18m-24m-cell_ontology_class.csv', 
-            './data/merged_augmented.csv', 
-            {
-              delimiter: ',',
-              header: true,
-              download: true,
-              dynamicTyping: true,
-              complete, 
-              error
-            }
-          );
-      });
-      if(updateDataset)
-        updateDataset(csvData.data as ExpressionDataRow[]);
+      // // Load the expression data
+      // const csvData : CsvParseResult = await new Promise(
+      //   function(complete, error) {
+      //     Papa.parse(
+      //       // './data/facs-18m-24m-cell_ontology_class.csv', 
+      //       './data/merged_augmented.csv', 
+      //       {
+      //         delimiter: ',',
+      //         header: true,
+      //         download: true,
+      //         dynamicTyping: true,
+      //         complete, 
+      //         error
+      //       }
+      //     );
+      // });
+      // updateDataset?.(csvData.data as ExpressionDataRow[]);
+
+      // Load pathways
+      let pathways = await axios.get('./data/pathways.json');
+      updatePathways?.(pathways.data as Pathway[]);
+
       setLoading(false);
     };
     loadData();
@@ -51,7 +60,7 @@ function App({ updateDataset } : Partial<ConnectedProps<typeof connector>>) {
 
   const canvasRef = useRef(null);
 
-  const gestureData = {
+  const gestureData : GestureData = {
     dragging: false,
     dragX: 0,
     dragY: 0,
@@ -61,6 +70,7 @@ function App({ updateDataset } : Partial<ConnectedProps<typeof connector>>) {
     pinching: false,
     pinchD: 0,
     pinchA: 0,
+    pinchOrigin: [0, 0],
   };
   const bind = useGesture({
     onDrag: ({ event, last, down, movement: [mx, my] }) => {
@@ -78,11 +88,13 @@ function App({ updateDataset } : Partial<ConnectedProps<typeof connector>>) {
       if(!last)
         event?.preventDefault();
     },
-    onPinch: ({ event, last, down, da: [d, a] }) => {
+    onPinch: ({ event, first, last, down, da: [d, a], origin }) => {
       // console.log('onPinch', d, a)
       gestureData.pinching = down;
       gestureData.pinchD = d;
       gestureData.pinchA = a;
+      if(first && origin)
+        gestureData.pinchOrigin = [ origin[0], origin[1] ];
       if(!last)
         event?.preventDefault();
     },
@@ -108,10 +120,12 @@ function App({ updateDataset } : Partial<ConnectedProps<typeof connector>>) {
           }}
           orthographic={true}
           pixelRatio={dpi}
+          gl2={true}
           // {...bind()}
         >
           <SceneController gestureData={gestureData}>
-            <Volcano />
+            <Graph />
+            {/* <Volcano /> */}
           </SceneController>
         </Canvas>
       </div>

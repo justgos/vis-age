@@ -1,7 +1,7 @@
 import { ExpressionDataRow } from '../../core/types'
 import { 
   UpdateExpressionDatasetAction, 
-  UpdateExpressionDatasetTextFilterAction, 
+  UpdateExpressionDatasetFilterAction, 
   UPDATE_DATASET, 
   UPDATE_FILTER,
   FilterValueType,
@@ -14,7 +14,7 @@ export const updateDataset = (dataset : ExpressionDataRow[]) : UpdateExpressionD
   }
 };
 
-export const updateFilter = (name : string, value : FilterValueType) : UpdateExpressionDatasetTextFilterAction => {
+export const updateFilter = (name : string, value : FilterValueType) : UpdateExpressionDatasetFilterAction => {
   return {
     type: UPDATE_FILTER,
     name,

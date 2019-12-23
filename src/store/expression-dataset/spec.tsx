@@ -1,7 +1,7 @@
 import { createStore } from 'redux';
 import { allReducers, store as templateStore } from '../'
 import { updateDataset, updateFilter } from './actions'
-import { ExpressionDataRow } from '../../core/types'
+// import { ExpressionDataRow } from '../../core/types'
 
 describe("Store: expression-dataset", () => {
 
