@@ -12,6 +12,7 @@ interface Props {
 
 export default function SceneController({ children, gestureData } : PropsWithChildren<Props>) {
   const {
+    mouse,
     size: { width, height },
     camera,
     gl,
@@ -27,7 +28,7 @@ export default function SceneController({ children, gestureData } : PropsWithChi
   const viewTransform = useMemo(() => {
     return {
       x: 0,
-      y: -80,
+      y: -80 + height / 2,
       k: 1.0,
     };
   }, []);
@@ -42,6 +43,7 @@ export default function SceneController({ children, gestureData } : PropsWithChi
       pinching: false,
       pinchD: 0,
       pinchA: 0,
+      pinchOrigin: [0, 0],
     };
   }, []);
   useFrame(() => {
@@ -53,6 +55,9 @@ export default function SceneController({ children, gestureData } : PropsWithChi
         lastReportTime.value = curTime;
         fpsCount.value = 0;
     }
+
+    let mx = (mouse.x * 0.5) * width / camera.zoom + camera.position.x;
+    let my = (mouse.y * 0.5) * height / camera.zoom + camera.position.y;
 
     // camera.position.x = width / 2;
     if(gestureData.dragging) {
@@ -67,7 +72,11 @@ export default function SceneController({ children, gestureData } : PropsWithChi
     lastGestureData.dragging = gestureData.dragging;
 
     if(gestureData.scrolling) {
-      viewTransform.k *= 1.0 - 0.002 * (gestureData.scrollY - lastGestureData.scrollY);
+      const dScale = 1.0 - 0.002 * (gestureData.scrollY - lastGestureData.scrollY);
+      viewTransform.x += (mx - viewTransform.x) * -(1.0 - dScale);
+      viewTransform.y += (my - viewTransform.y) * -(1.0 - dScale);
+
+      viewTransform.k *= dScale;
       lastGestureData.scrollX = gestureData.scrollX;
       lastGestureData.scrollY = gestureData.scrollY;
     } else {
@@ -78,7 +87,14 @@ export default function SceneController({ children, gestureData } : PropsWithChi
 
     if(gestureData.pinching) {
       if(lastGestureData.pinching) {
-        viewTransform.k *= gestureData.pinchD / lastGestureData.pinchD;
+        let dScale = gestureData.pinchD / lastGestureData.pinchD;
+        viewTransform.x += (lastGestureData.pinchOrigin[0] - viewTransform.x) * -(1.0 - dScale);
+        viewTransform.y += (lastGestureData.pinchOrigin[1] - viewTransform.y) * -(1.0 - dScale);
+        viewTransform.k *= dScale;
+      } else {
+        let px = (gestureData.pinchOrigin[0] - width * 0.5) / camera.zoom + camera.position.x;
+        let py = (height - gestureData.pinchOrigin[1] - height * 0.5) / camera.zoom + camera.position.y;
+        lastGestureData.pinchOrigin = [ px, py ];
       }
       lastGestureData.pinchD = gestureData.pinchD;
       lastGestureData.pinchA = gestureData.pinchA;
@@ -89,7 +105,7 @@ export default function SceneController({ children, gestureData } : PropsWithChi
     // console.log('viewTransform.k', viewTransform.k)
     // Object.assign(lastGestureData, gestureData);
     camera.position.x = viewTransform.x;
-    camera.position.y = height / 2 + viewTransform.y;
+    camera.position.y = viewTransform.y;
     camera.zoom = viewTransform.k;
     camera.updateProjectionMatrix();
 

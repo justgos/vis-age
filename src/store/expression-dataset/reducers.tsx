@@ -4,7 +4,7 @@ import {
   ExpressionDatasetState, 
   ExpressionDatasetActionTypes, 
   UpdateExpressionDatasetAction,
-  UpdateExpressionDatasetTextFilterAction,  
+  UpdateExpressionDatasetFilterAction,  
   UPDATE_DATASET,
   UPDATE_FILTER,
   FilterValueType,
@@ -73,7 +73,7 @@ export const expressionDatasetReducer = (
       state = onDatasetFilterChanged(state);
       return {...state};
     case UPDATE_FILTER:
-      let a = (action as UpdateExpressionDatasetTextFilterAction);
+      let a = (action as UpdateExpressionDatasetFilterAction);
       state.filterValues.set(a.name, a.value);
       state = onDatasetFilterChanged(state);
       return {...state};

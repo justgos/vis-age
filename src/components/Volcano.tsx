@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useThree, useFrame } from 'react-three-fiber';
-import { connect, ConnectedProps  } from 'react-redux';
 import RBush from 'rbush';
 import knn from 'rbush-knn';
 
@@ -9,22 +8,6 @@ import { store } from '../store';
 import { updateTooltip } from '../store/tooltip/actions'
 import { PointShader } from '../shaders/PointShader';
 import { ExpressionDataRow } from '../core/types';
-
-// const VolcanoTooltip = ({ active, payload } : TooltipProps) => {
-//   if(payload.length < 1) {
-//     return (<></>);
-//   }
-
-//   return (
-//     <div className="custom-tooltip">
-//       <div className="gene-name">{payload[0].payload.gene}</div>
-//       <div className="prop">
-//         <div className="name">Fold-change</div>
-//         <div className="value">{payload[0].payload.fold_change_log2.toFixed(2)}</div>
-//       </div>
-//     </div>
-//   );
-// };
 
 export const Volcano = () => {
   const {
@@ -60,8 +43,8 @@ export const Volcano = () => {
     () => {
       console.log('expressionDataset.raw.length', expressionDataset.raw.length)
       let positions = [];
-      for(let i = 0; i < expressionDataset.raw.length * 3; i+=3) {
-        let row = expressionDataset.raw[i / 3];
+      for(let i = 0; i < expressionDataset.raw.length; i++) {
+        let row = expressionDataset.raw[i];
         positions.push(
           xpos(row),
           ypos(row),
@@ -70,14 +53,14 @@ export const Volcano = () => {
       }
       let sizes = [];
       // Init sizes to zero
-      for(let i = 0; i < expressionDataset.raw.length; i+=1) {
+      for(let i = 0; i < expressionDataset.raw.length; i++) {
         sizes.push(1.0);
       }
       let colors = [];
       const warmColor = [251.0 / 255, 101.0 / 255, 66.0 / 255];
       const coldColor = [55.0 / 255, 94.0 / 255, 151.0 / 255];
-      for(let i = 0; i < expressionDataset.raw.length * 4; i+=4) {
-        let row = expressionDataset.raw[i / 4];
+      for(let i = 0; i < expressionDataset.raw.length; i++) {
+        let row = expressionDataset.raw[i];
         if((row.fold_change_log2 || 0) > 0)
           colors.push(...warmColor, 1.0);
         else
@@ -140,6 +123,8 @@ export const Volcano = () => {
   useFrame(() => {
     let mx = (mouse.x * 0.5) * width / camera.zoom + camera.position.x;
     let my = (mouse.y * 0.5) * height / camera.zoom + camera.position.y;
+
+    // Tooltip targeting
     let nearest = knn(
       pointTree, 
       mx, 

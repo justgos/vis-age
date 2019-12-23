@@ -5,6 +5,7 @@
     border: #aaa solid 1px;
     text-align: left;
     z-index: 10000;
+    pointer-events: none;
 
     .gene-name {
         display: inline-block;

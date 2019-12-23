@@ -8,13 +8,14 @@ export interface GestureData {
   pinching : boolean;
   pinchD : number;
   pinchA: number;
+  pinchOrigin: [ number, number ];
 }
 
 export interface CsvParseResult {
   data : Object[];
 };
 
-export type ExpressionDataRow = {
+export interface ExpressionDataRow {
   __id? : number;
   start_age? : string;
   end_age? : string;
@@ -28,4 +29,52 @@ export type ExpressionDataRow = {
 
   uniprot_mouse? : string;
   uniprot_daphnia? : string;
+};
+
+export interface PathwayEntity {
+  __id? : number;
+  type : string;
+  name : string;
+};
+
+export interface Gene {
+  name : string;
+  type : string;
+  desc : string;
+};
+
+export interface XRef {
+  id : string;
+  db : string;
+  gene? : Gene;
+};
+
+export interface EntityReference {
+  name : string;
+  xref? : XRef;
+};
+
+export interface Molecule extends PathwayEntity {
+  cellularLocation : string;
+  entityReference? : EntityReference;
+};
+
+export interface Reaction extends PathwayEntity {
+  conversionDirection? : string;
+  left? : Molecule[];
+  right? : Molecule[];
+};
+
+export interface Control extends PathwayEntity {
+  controller : Molecule;
+  controlled : Reaction;
+};
+
+export interface TemplateReaction extends PathwayEntity {
+  template? : Molecule;
+  product : Molecule[];
+};
+
+export interface Pathway extends PathwayEntity {
+  pathwayComponent : (Control | TemplateReaction | Reaction)[];
 };

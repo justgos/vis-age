@@ -19,7 +19,7 @@ export interface UpdateExpressionDatasetAction {
   type : string;
   dataset : ExpressionDataRow[];
 };
-export interface UpdateExpressionDatasetTextFilterAction {
+export interface UpdateExpressionDatasetFilterAction {
   type : string;
   name : string;
   value : FilterValueType;
@@ -27,4 +27,4 @@ export interface UpdateExpressionDatasetTextFilterAction {
 
 export type ExpressionDatasetActionTypes = 
   UpdateExpressionDatasetAction 
-  | UpdateExpressionDatasetTextFilterAction;
+  | UpdateExpressionDatasetFilterAction;
