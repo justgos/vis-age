@@ -6,10 +6,16 @@ export type FilterValueType = string | number | boolean | undefined;
 export interface ExpressionDatasetState {
   lastUpdateTime : number;
   raw : ExpressionDataRow[];
+  gene2idxMap : Map<string, Map<string, number>>;
   filterValues : Map<string, FilterValueType>;
+  filterValueVocabulary : Map<string, Map<string, number>>;
   crossfilter? : crossfilter.Crossfilter<ExpressionDataRow>;
   filterDimensions? : Map<string, crossfilter.Dimension<ExpressionDataRow, string>>;
   filtered : ExpressionDataRow[];
+  raw2filtered : Map<number, number>;
+
+  gene2idxKey : (start_age? : string, end_age? : string, sex? : string) => string;
+  getByGene : (gene? : string) => ExpressionDataRow | null;
 };
 
 export const UPDATE_DATASET = "UPDATE_DATASET";

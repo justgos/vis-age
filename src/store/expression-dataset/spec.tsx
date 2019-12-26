@@ -6,8 +6,8 @@ import { updateDataset, updateFilter } from './actions'
 describe("Store: expression-dataset", () => {
 
   let sampleDataset = [
-    { sex: "male", subtissue: "Brain_Non-Myeloid" },
-    { sex: "female", tissue: "Brain_Myeloid" },
+    { start_age: '3m', end_age: '18m', sex: "male", subtissue: "Brain_Non-Myeloid" },
+    { start_age: '3m', end_age: '18m', sex: "female", tissue: "Brain_Myeloid" },
     { p_value: 1e-12, },
   ];
 
@@ -31,14 +31,15 @@ describe("Store: expression-dataset", () => {
   it("Filters by text", () => {
     store.dispatch(updateDataset(sampleDataset));
 
+    // The default 'female' filter value will be applied on dataset load
     store.dispatch(updateFilter("text", "male"));
-    expect(store.getState().expressionDataset.filtered.length).toBe(2);
+    expect(store.getState().expressionDataset.filtered.length).toBe(1);
     
     store.dispatch(updateFilter("text", "female"));
     expect(store.getState().expressionDataset.filtered.length).toBe(1);
     
     store.dispatch(updateFilter("text", "brain"));
-    expect(store.getState().expressionDataset.filtered.length).toBe(2);
+    expect(store.getState().expressionDataset.filtered.length).toBe(1);
   });
 
 });

@@ -46,16 +46,16 @@ export interface Gene {
 export interface XRef {
   id : string;
   db : string;
-  gene? : Gene;
 };
 
 export interface EntityReference {
   name : string;
+  gene? : Gene;
   xref? : XRef;
 };
 
 export interface Molecule extends PathwayEntity {
-  cellularLocation : string;
+  cellularLocation? : string;
   entityReference? : EntityReference;
 };
 

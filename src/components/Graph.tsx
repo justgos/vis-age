@@ -13,12 +13,16 @@ import { GraphEdgeShader } from '../shaders/GraphEdgeShader'
 import { PathwayEntity, Molecule, Control, TemplateReaction, Reaction } from '../core/types';
 import { BufferAttribute } from 'three';
 
-interface GraphNode extends PathwayEntity {
+interface GraphNode extends Molecule {
   __id : number;
   x : number;
   y : number;
   vx : number;
   vy : number;
+  minX? : number;
+  maxX? : number;
+  minY? : number;
+  maxY? : number;
   location : number | undefined;
 }
 
@@ -37,8 +41,8 @@ export const Graph = () => {
   const [ pathways, setPathways ] = useState({...store.getState().pathways});
   const [ expressionDataset, setExpressionDataset ] = useState({...store.getState().expressionDataset});
   const updateData = () => {
-    setPathways({...store.getState().pathways});
     setExpressionDataset({...store.getState().expressionDataset});
+    setPathways({...store.getState().pathways});
   };
   useEffect(() => {
     store.subscribe(() => {
@@ -52,24 +56,42 @@ export const Graph = () => {
   // const ypos = (row : ExpressionDataRow) => 
   //   (-Math.log(Math.max(row.p_value || 0, 1e-300))) * 0.9;
 
+  const neutralColor = [0.7, 0.7, 0.7, 0.5];
+  const warmColor = [251.0 / 255, 101.0 / 255, 66.0 / 255, 1.0];
+  const coldColor = [55.0 / 255, 94.0 / 255, 151.0 / 255, 1.0];
+
   const posAttr = useRef<THREE.BufferAttribute>();
   const edgePosAttr = useRef<THREE.BufferAttribute>();
+  const colorAttr = useRef<THREE.BufferAttribute>();
   const sizeAttr = useRef<THREE.BufferAttribute>();
   // Setup point attribute buffers
-  const [ nodes, edgeMap, positions, sizes, colors, pointTree, edgeIndices, edgeTexcoords, simulation ] = useMemo(
+  const [ nodes, edgeMap, positions, sizes, colors, pointTree, edgePositions, edgeTexcoords, simulation ] = useMemo(
     () => {
       console.log('pathways.raw.length', pathways.raw.length);
-      const nodes : PathwayEntity[] = [];
+      const nodes : GraphNode[] = [];
       const nodeNameMap = new Map<string, number>();
+      const edges : GraphEdge[] = [];
       const edgeMap = new Map<number, GraphEdge[]>();
       const positions : number[] = [];
       const sizes : number[] = [];
       const colors : number[] = [];
-      const edgeIndices : number[] = [];
+      const edgePositions : number[] = [];
       const edgeTexcoords : number[] = [];
+      const pointTree = new RBush();
 
-      const warmColor = [251.0 / 255, 101.0 / 255, 66.0 / 255];
-      const coldColor = [55.0 / 255, 94.0 / 255, 151.0 / 255];
+      if(pathways.raw.length < 1) {
+        return [ 
+          nodes,
+          edgeMap,
+          new Float32Array(positions), 
+          new Float32Array(sizes), 
+          new Float32Array(colors), 
+          pointTree,
+          new Float32Array(edgePositions),
+          new Float32Array(edgeTexcoords),
+          forceSimulation(),
+        ];
+      }
 
       const addNode = (data : PathwayEntity) => {
         let name = data.name;
@@ -87,40 +109,47 @@ export const Graph = () => {
           vx: 0,
           vy: 0,
         };
+        let color = neutralColor;
+        let size = 1.0;
         if(data.type === 'molecule' && (data as Molecule).cellularLocation) {
           const cellularLocation = (data as Molecule).cellularLocation;
           if([
             'extracellular region',
             'external side of plasma membrane',
             'cell junction',
-          ].some(l => l === cellularLocation)) {
-            node.location = 3;
+          ].some(l => cellularLocation?.includes(l))) {
+            node.location = 5;
           } else if([ 
             'cell outer membrane',
             'cell wall',
             'cytoplasmic side of plasma membrane',
             'plasma membrane',
           ].some(l => l === cellularLocation)) {
-            node.location = 2;
+            node.location = 4;
+          } else if([ 
+            'mitochondrial',
+          ].some(l => cellularLocation?.includes(l))) {
+            node.location = 3;
           } else if([ 
             'cytosol',
             'host cell cytosol',
-          ].some(l => l === cellularLocation)) {
+          ].some(l => cellularLocation?.includes(l))) {
             node.location = 0;
           } else if([ 
-            'mitochondrial inner membrane',
-            'mitochondrial intermembrane space',
-            'mitochondrial matrix',
-            'mitochondrial outer membrane',
-          ].some(l => l === cellularLocation)) {
-            node.location = -2;
+            'Golgi',
+          ].some(l => cellularLocation?.includes(l))) {
+            node.location = -3;
+          } else if([ 
+            'endoplasmic reticulum',
+          ].some(l => cellularLocation?.includes(l))) {
+            node.location = -4;
           } else if([ 
             'nuclear envelope',
             'nucleoplasm',
             'chromosome',
             'chromosome, centromeric region',
-          ].some(l => l === cellularLocation)) {
-            node.location = -3;
+          ].some(l => cellularLocation?.includes(l))) {
+            node.location = -5;
           }
         }
         nodeNameMap.set(node.name, id);
@@ -130,22 +159,26 @@ export const Graph = () => {
           node.y,
           0
         );
-        sizes.push(1.0);
-
-        if(data.type === 'molecule')
-          colors.push(...coldColor, 1.0);
-        else
-          colors.push(...warmColor, 1.0);
+        sizes.push(size);
+        colors.push(...color);
         return id;
       };
       const addEdge = (source : number, target : number) => {
-        let edges = edgeMap.get(source);
-        if(!edges) {
-          edges = [];
-          edgeMap.set(source, edges);
+        let sourceEdges = edgeMap.get(source);
+        if(!sourceEdges) {
+          sourceEdges = [];
+          edgeMap.set(source, sourceEdges);
         }
+        sourceEdges.push({ source, target });
         edges.push({ source, target });
-        edgeIndices.push(source, target);
+        edgePositions.push(
+          positions[source * 3],
+          positions[source * 3 + 1],
+          positions[source * 3 + 2],
+          positions[target * 3],
+          positions[target * 3 + 1],
+          positions[target * 3 + 2]
+        );
         edgeTexcoords.push(0.0, 0.0, 1.0, 1.0);
       }
 
@@ -198,14 +231,14 @@ export const Graph = () => {
               let moleculeNodeId = addNode(molecule);
               // addEdge(reactionNodeId, moleculeNodeId);
 
-              if(reaction.conversionDirection === 'LEFT-TO-RIGHT') {
+              if(reaction.conversionDirection === 'LEFT_TO_RIGHT') {
                 addEdge(moleculeNodeId, reactionNodeId);
-              } else if(reaction.conversionDirection === 'RIGHT-TO-LEFT') {
+              } else if(reaction.conversionDirection === 'RIGHT_TO_LEFT') {
                 addEdge(reactionNodeId, moleculeNodeId);
               } else {
                 // REVERSIBLE
                 addEdge(moleculeNodeId, reactionNodeId);
-                addEdge(reactionNodeId, moleculeNodeId);
+                // addEdge(reactionNodeId, moleculeNodeId);
               }
             }
           }
@@ -215,13 +248,13 @@ export const Graph = () => {
               let moleculeNodeId = addNode(molecule);
               // addEdge(reactionNodeId, moleculeNodeId);
 
-              if(reaction.conversionDirection === 'LEFT-TO-RIGHT') {
+              if(reaction.conversionDirection === 'LEFT_TO_RIGHT') {
                 addEdge(reactionNodeId, moleculeNodeId);
-              } else if(reaction.conversionDirection === 'RIGHT-TO-LEFT') {
+              } else if(reaction.conversionDirection === 'RIGHT_TO_LEFT') {
                 addEdge(moleculeNodeId, reactionNodeId);
               } else {
                 // REVERSIBLE
-                addEdge(moleculeNodeId, reactionNodeId);
+                // addEdge(moleculeNodeId, reactionNodeId);
                 addEdge(reactionNodeId, moleculeNodeId);
               }
             }
@@ -254,23 +287,48 @@ export const Graph = () => {
           })
         );
       simulation.stop();
-      simulation.tick(50);
+
       const simNodes = simulation.nodes();
+      let cachedPositions = JSON.parse(window.localStorage.getItem('graph/cachedPositions') || '[]');
+      // console.log('cachedPositions', cachedPositions)
+      if(cachedPositions.length === simNodes.length) {
+        // console.log('loading from cache')
+        simulation.nodes().forEach((n, i) => {
+          n.x = cachedPositions[i].x;
+          n.y = cachedPositions[i].y;
+        })
+      } else {
+        simulation.tick(50);
+        cachedPositions = simNodes.map(n => { return { x: n.x, y: n.y }; })
+        window.localStorage.setItem('graph/cachedPositions', JSON.stringify(cachedPositions));
+      }
+
+      simulation.nodes().forEach((n, i) => {
+        n.minX = n.x;
+        n.maxX = n.x;
+        n.minY = n.y;
+        n.maxY = n.y;
+      });
+
+      // Update node positions according to the simulation results
       for(let i = 0; i < simNodes.length; i++) {
         const simNode = simNodes[i];
         positions[i*3] = simNode.x;
         positions[i*3+1] = simNode.y;
       }
+      // Update edge positions
+      for(let i = 0; i < edges.length; i++) {
+        const edge = edges[i];
+        edgePositions[i * 6] = positions[edge.source * 3];
+        edgePositions[i * 6 + 1] = positions[edge.source * 3 + 1];
+        edgePositions[i * 6 + 2] = positions[edge.source * 3 + 2];
+        edgePositions[i * 6 + 3] = positions[edge.target * 3];
+        edgePositions[i * 6 + 4] = positions[edge.target * 3 + 1];
+        edgePositions[i * 6 + 5] = positions[edge.target * 3 + 2];
+      }
 
-      const pointTree = new RBush();
       pointTree.clear();
-      pointTree.load(simNodes.map((n, i) => { return { 
-        minX: n.x, 
-        minY: n.y, 
-        maxX: n.x, 
-        maxY: n.y,
-        ...n 
-      }}));
+      pointTree.load(simNodes);
 
       return [ 
         nodes,
@@ -279,43 +337,57 @@ export const Graph = () => {
         new Float32Array(sizes), 
         new Float32Array(colors), 
         pointTree,
-        new BufferAttribute(new Uint32Array(edgeIndices), 1),
+        new Float32Array(edgePositions),
         new Float32Array(edgeTexcoords),
         simulation,
       ];
     },
     [pathways.lastUpdateTime, pathways.raw]
   );
-  // useEffect(
-  //   () => {
-  //     if(!sizeAttr.current)
-  //       return;
-  //     let sizes = [];
-  //     // Init sizes to zero
-  //     for(let i = 0; i < expressionDataset.raw.length; i+=1) {
-  //       sizes.push(0.2);
-  //     }
-  //     // console.log('filtered expressionDataset.raw.length', expressionDataset.raw.length)
-  //     // Set non-zeros sizes for the filtered points
-  //     for(let i = 0; i < expressionDataset.filtered.length; i+=1) {
-  //       let row = expressionDataset.filtered[i];
-  //       if(row.__id)
-  //         sizes[row.__id] = 1.0;
-  //     }
-  //     sizeAttr.current.array = new Float32Array(sizes);
-  //     sizeAttr.current.needsUpdate = true;
 
-  //     pointTree.clear();
-  //     pointTree.load(expressionDataset.filtered.map(r => { return { 
-  //       minX: xpos(r), 
-  //       minY: ypos(r), 
-  //       maxX: xpos(r), 
-  //       maxY: ypos(r),
-  //       ...r 
-  //     }}));
-  //   },
-  //   [expressionDataset.filtered]
-  // );
+  const refExpressionRows = useMemo(
+    () => {
+      const refExpressionRows : number[] = [];
+      if(!colorAttr.current || !sizeAttr.current)
+        return refExpressionRows;
+      const colors = [];
+      const sizes = [];
+
+      console.log('filtered')
+
+      for(let i = 0; i < nodes.length; i++) {
+        const node = nodes[i];
+        let color = neutralColor;
+        let size = 1.0;
+        let refExpressionRow = -1;
+        if(node.type === 'molecule') {
+          const geneName = node.entityReference?.gene?.name;
+          // console.log('geneName', geneName);
+          const expressionData = expressionDataset.getByGene(geneName);
+          if(expressionData != null) {
+            refExpressionRow = expressionData.__id || -1;
+            let foldChange = expressionData.fold_change_log2 || 0;
+            size = Math.sqrt(Math.abs(foldChange)) * 2.0;
+            if(foldChange > 0)
+              color = warmColor;
+            else
+              color = coldColor;
+          }
+        }
+        refExpressionRows.push(refExpressionRow);
+        colors.push(...color);
+        sizes.push(size);
+      }
+
+      colorAttr.current.array = new Float32Array(colors);
+      colorAttr.current.needsUpdate = true;
+      sizeAttr.current.array = new Float32Array(sizes);
+      sizeAttr.current.needsUpdate = true;
+
+      return refExpressionRows;
+    },
+    [expressionDataset.filtered, colorAttr.current, sizeAttr.current]
+  );
 
   const [ pointShader, graphEdgeShader ] = useMemo(() => {
     const loader = new THREE.TextureLoader();
@@ -376,76 +448,37 @@ export const Graph = () => {
       1
     );
     if(nearest.length > 0) {
-      let row = nearest[0];
-      if(row.__id !== lastTargetId.value) {
+      const node = nodes[(nearest[0] as GraphNode).__id];
+      if(node.__id !== lastTargetId.value) {
+        const simNode = simulation.nodes()[node.__id];
+        const refExpressionRow = refExpressionRows[node.__id]
+        const row = (refExpressionRow >= 0) ? expressionDataset.raw[refExpressionRow] : undefined;
         // console.log('updateTooltip', row)
         store.dispatch(updateTooltip(
-          ((row.maxX + row.minX) / 2 - camera.position.x) * camera.zoom + width / 2,
-          height / 2 - ((row.minY + row.maxY) / 2 - camera.position.y) * camera.zoom,
+          ((simNode.x || 0) - camera.position.x) * camera.zoom + width / 2,
+          height / 2 - ((simNode.y || 0) - camera.position.y) * camera.zoom,
           <>
             <div className="prop">
               <div className="name">Name</div>
-              <div className="value">{dashForNan(row.name)}</div>
+              <div className="value">{dashForNan(node.name)}</div>
             </div>
             <div className="prop">
               <div className="name">Location</div>
-              <div className="value">{row.cellularLocation}</div>
-            </div>
-            {/* <div className="prop">
-              <div className="name">Gene</div>
-              <div className="value">
-                <div className="gene-name">{row.gene}</div> (
-                <a href={"https://www.uniprot.org/uniprot/" + row.uniprot_mouse} target="_blank" rel="noopener noreferrer">
-                  {row.uniprot_mouse}
-                </a>
-                )
-              </div>
-            </div>
-            <div className="prop">
-              <div className="name">Closest Daphnia homolog</div>
-              <div className="value">
-                <a href={"https://www.uniprot.org/uniprot/" + row.uniprot_daphnia} target="_blank" rel="noopener noreferrer">
-                  {row.uniprot_daphnia}
-                </a>
-              </div>
+              <div className="value">{node.cellularLocation}</div>
             </div>
             <div className="prop">
               <div className="name">log<sub>2</sub>(Fold-change)</div>
-              <div className="value" style={{ color: row.fold_change_log2 > 0 ? "#fb6542" : "#375e97" }}>
-                {row.fold_change_log2?.toFixed(2)}
+              <div className="value" style={{ color: (row?.fold_change_log2 || 0) > 0 ? "#fb6542" : "#375e97" }}>
+                {row?.fold_change_log2?.toFixed(2)}
               </div>
             </div>
             <div className="prop">
-              <div className="name">p-value</div>
-              <div className="value">{row.p_value?.toExponential(6)}</div>
+              <div className="name">xref</div>
+              <div className="value">{node.entityReference?.xref?.db}:{node.entityReference?.xref?.id}</div>
             </div>
-            <div className="prop">
-              <div className="name">Start age</div>
-              <div className="value">{row.start_age}</div>
-            </div>
-            <div className="prop">
-              <div className="name">End age</div>
-              <div className="value">{row.end_age}</div>
-            </div>
-            <div className="prop">
-              <div className="name">Sex</div>
-              <div className="value">{row.sex}</div>
-            </div>
-            <div className="prop">
-              <div className="name">Tissue</div>
-              <div className="value">{dashForNan(row.tissue)}</div>
-            </div>
-            <div className="prop">
-              <div className="name">Subtissue</div>
-              <div className="value">{dashForNan(row.subtissue)}</div>
-            </div>
-            <div className="prop">
-              <div className="name">Cell type</div>
-              <div className="value">{dashForNan(row.cell_ontology_class)}</div>
-            </div> */}
           </>
         ));
-        lastTargetId.value = row.__id;
+        lastTargetId.value = row?.__id || -1;
       }
       // console.log(nearest[0].gene, mx, my);
     }
@@ -463,12 +496,11 @@ export const Graph = () => {
       <lineSegments
         frustumCulled={false}
         material={graphEdgeShader}>
-        <bufferGeometry attach="geometry"
-          index={edgeIndices}>
+        <bufferGeometry attach="geometry">
           <bufferAttribute
             attachObject={['attributes', 'position']}
-            count={positions.length / 3}
-            array={positions}
+            count={edgePositions.length / 3}
+            array={edgePositions}
             itemSize={3}
             ref={edgePosAttr}
           />
@@ -478,13 +510,13 @@ export const Graph = () => {
             array={edgeTexcoords}
             itemSize={2}
           />
-          {/* <bufferAttribute
+          <bufferAttribute
             attachObject={['attributes', 'size']}
             count={sizes.length}
             array={sizes}
             itemSize={1}
             ref={sizeAttr}
-          /> */}
+          />
           {/* <bufferAttribute
             attachObject={['attributes', 'color']}
             count={colors.length / 4}
@@ -518,7 +550,7 @@ export const Graph = () => {
             count={colors.length / 4}
             array={colors}
             itemSize={4}
-            // ref={colorAttr}
+            ref={colorAttr}
           />
         </bufferGeometry>
       </points>
@@ -537,7 +569,7 @@ const structuringForce = (
 ) => {
   let constant = (_ : number) => {return () => (_)}
   // var strength = constant(2.0),
-  var strength : ((d : GraphNode) => number) = (d : GraphNode) => d.location === 0 ? 0.5 : 5.0,
+  var strength : ((d : GraphNode) => number) = (d : GraphNode) => d.location === 0 ? 0.5 : 1.0,
       nodes : GraphNode[],
       strengths : number[],
       xz : (number | undefined)[],

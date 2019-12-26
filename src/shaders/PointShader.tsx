@@ -14,7 +14,7 @@ export class PointShader extends THREE.ShaderMaterial {
 
         void main() {
             vec4 mvPosition = modelViewMatrix * vec4( position.xyz, 1.0 );
-            gl_PointSize = 10.0 * size;
+            gl_PointSize = 5.0 * size;
             gl_Position = projectionMatrix * mvPosition;
             vColor = color;
             // if(size == 0.0)

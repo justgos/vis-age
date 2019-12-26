@@ -31,23 +31,24 @@ function App({ updateDataset, updatePathways } : Partial<ConnectedProps<typeof c
   const [ loading, setLoading ] = useState(true);
   useEffect(() => {
     const loadData = async () => {
-      // // Load the expression data
-      // const csvData : CsvParseResult = await new Promise(
-      //   function(complete, error) {
-      //     Papa.parse(
-      //       // './data/facs-18m-24m-cell_ontology_class.csv', 
-      //       './data/merged_augmented.csv', 
-      //       {
-      //         delimiter: ',',
-      //         header: true,
-      //         download: true,
-      //         dynamicTyping: true,
-      //         complete, 
-      //         error
-      //       }
-      //     );
-      // });
-      // updateDataset?.(csvData.data as ExpressionDataRow[]);
+      // Load the expression data
+      const csvData : CsvParseResult = await new Promise(
+        function(complete, error) {
+          Papa.parse(
+            // './data/facs-18m-24m-cell_ontology_class.csv', 
+            './data/merged_augmented.csv', 
+            {
+              delimiter: ',',
+              header: true,
+              download: true,
+              dynamicTyping: true,
+              skipEmptyLines: true,
+              complete, 
+              error
+            }
+          );
+      });
+      updateDataset?.(csvData.data as ExpressionDataRow[]);
 
       // Load pathways
       let pathways = await axios.get('./data/pathways.json');
