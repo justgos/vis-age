@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { connect, ConnectedProps  } from 'react-redux';
-import { Classes, Checkbox } from "@blueprintjs/core";
+import { Classes, Checkbox, HTMLSelect } from "@blueprintjs/core";
 
 import { ExpressionDatasetState } from '../store/expression-dataset/types'
 import { updateFilter } from '../store/expression-dataset/actions'
@@ -12,6 +12,7 @@ const mapStateToProps = (
 ) => {
   return {
     filterValues: state.expressionDataset.filterValues,
+    filterValueVocabulary: state.expressionDataset.filterValueVocabulary,
   };
 };
 
@@ -30,19 +31,33 @@ type Props = PropsFromRedux & {
   //
 };
 
-export const FilterPanel = ({ filterValues, updateFilter } : Props) => {
+export const FilterPanel = ({ filterValues, filterValueVocabulary, updateFilter } : Props) => {
   return (
     <div className="filter-panel">
+      {[ 'start_age', 'end_age', 'sex' ].map(filter_param => 
+        <HTMLSelect 
+          key={filter_param}
+          className="filter-element"
+          options={[...(filterValueVocabulary.get(filter_param)?.entries() || [])].map(t => {
+            return {
+              label: `${t[0]} - ${t[1]}`,
+              value: t[0],
+            };
+          })}
+          value={filterValues.get(filter_param) as string} 
+          onChange={ evt => updateFilter(filter_param, (evt.target as HTMLSelectElement).value) } 
+        />
+      )}
       <input 
         className={`filter-element text-filter ${Classes.INPUT}`} 
         type="text" 
         placeholder="filter by any text field" 
-        value={filterValues.get("text") as string} 
+        value={filterValues.get("text") as string || ''} 
         onChange={ evt => updateFilter("text", evt.target.value) } 
       />
       <Checkbox 
         className={`filter-element homolog-filter ${Classes.BUTTON}`} 
-        checked={filterValues.get("uniprot_daphnia") as boolean} 
+        checked={filterValues.get("uniprot_daphnia") != null} 
         onChange={ evt => updateFilter("uniprot_daphnia", (evt.target as HTMLInputElement).checked ? "~" : undefined) }
       >
         has Daphnia homolog

@@ -103,7 +103,7 @@ export const Volcano = () => {
         ...r 
       }}));
     },
-    [expressionDataset.filtered]
+    [expressionDataset.filtered, sizeAttr.current]
   );
 
   const [pointShader] = useMemo(() => {
