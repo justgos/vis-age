@@ -32,7 +32,6 @@ export interface ExpressionDataRow {
 };
 
 export interface PathwayEntity {
-  __id? : number;
   type : string;
   name : string;
 };
@@ -78,3 +77,16 @@ export interface TemplateReaction extends PathwayEntity {
 export interface Pathway extends PathwayEntity {
   pathwayComponent : (Control | TemplateReaction | Reaction)[];
 };
+
+export interface PathwayNode {
+  __id : number;
+  type : string;
+  name : string;
+  cellularLocation? : string;
+  entityReference? : EntityReference;
+}
+
+export interface PathwayEdge {
+  source : number;
+  target : number;
+}

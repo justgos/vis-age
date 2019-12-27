@@ -1,6 +1,8 @@
 import { createStore } from 'redux';
 import { allReducers, store as templateStore } from '../'
-import { updateDataset, setFilterDimensions, setFilterValue } from './actions'
+import { updateDataset, setFilterDimensions, setFilterValue, addCustomFilterDimension } from './actions'
+import { ExpressionDataRow } from '../../core/types';
+import { CustomFilterFn } from './types';
 // import { ExpressionDataRow } from '../../core/types'
 
 describe('Store: expression-dataset', () => {
@@ -31,8 +33,7 @@ describe('Store: expression-dataset', () => {
     store.dispatch(updateDataset(sampleDataset));
 
     store.dispatch(setFilterDimensions(
-      [ 'start_age', 'end_age', 'sex' ],
-      [ 'tissue', 'subtissue', 'cell_ontology_class', 'gene', 'uniprot_mouse', 'uniprot_daphnia' ]
+      [ 'start_age', 'end_age', 'sex' ]
     ));
     
     const stored = store.getState().expressionDataset;
@@ -47,9 +48,24 @@ describe('Store: expression-dataset', () => {
     store.dispatch(updateDataset(sampleDataset));
 
     store.dispatch(setFilterDimensions(
-      [],
-      [ 'sex', 'tissue', 'subtissue', 'cell_ontology_class', 'gene', 'uniprot_mouse', 'uniprot_daphnia' ]
+      []
     ));
+    const textColumns = [
+      'sex', 'tissue', 'subtissue', 'cell_ontology_class', 'gene', 'uniprot_mouse', 'uniprot_daphnia'
+    ];
+    store.dispatch(addCustomFilterDimension(
+      'text',
+      (row : ExpressionDataRow) => 
+        textColumns.map(d => (row as any)[d]).join('|').toLowerCase(),
+      (filterValue) => {
+        return v => (v as string).includes((filterValue as string).toLowerCase());
+      }
+    ));
+
+    const textFilterFn = store.getState().expressionDataset.customFilterFunctions.get('text');
+    expect(textFilterFn).toBeDefined();
+    expect((textFilterFn as CustomFilterFn)('male')('male')).toBeTruthy();
+    expect((textFilterFn as CustomFilterFn)('female')('male')).toBeFalsy();
 
     store.dispatch(setFilterValue('text', 'male'));
     expect(store.getState().expressionDataset.filtered.length).toBe(3);

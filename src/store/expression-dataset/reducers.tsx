@@ -1,4 +1,4 @@
-import crossfilter from 'crossfilter2';
+import crossfilter, { NaturallyOrderedValue } from 'crossfilter2';
 import { ExpressionDataRow } from '../../core/types'
 import { 
   ExpressionDatasetState, 
@@ -10,6 +10,9 @@ import {
   SET_FILTER_DIMENSIONS,
   SET_FILTER_VALUE,
   FilterValueType,
+  AddCustomExpressionDatasetFilterDimensionAction,
+  ADD_CUSTOM_FILTER_DIMENSION,
+  CustomFilterFn,
 } from './types'
 
 const initialState : ExpressionDatasetState = {
@@ -19,12 +22,15 @@ const initialState : ExpressionDatasetState = {
   filterValues: new Map<string, FilterValueType>(),
   filterValueVocabulary: new Map<string, Map<string, number>>(),
   filterDimensionNames: [],
+  customFilterFunctions: new Map<string, CustomFilterFn>(),
   filtered: [],
   raw2filtered : new Map<number, number>(),
 
   gene2idxKey: (...parts : string[]) => {
     return parts.join('|');
   },
+
+  /* Returns the gene expression from a filtered data subset */
   getByGene : function(gene? : string) {
     if(!gene)
       return null;
@@ -46,6 +52,7 @@ const updateFilterVocabularies = (state : ExpressionDatasetState) : ExpressionDa
     const dim = state.filterDimensions?.get(filter_param);
     if(!dim)
       return;
+    // Get all the unique terms and sort 'em alphanumerically
     const vocab = dim
       .group()
       .reduceCount()
@@ -64,25 +71,18 @@ const onDatasetFilterChanged = (state : ExpressionDatasetState) : ExpressionData
   if(!state.crossfilter || !state.filterDimensions)
     return state;
   for(let [ dimName, dim ] of state.filterDimensions.entries()) {
+    // Clear the applied filters
     dim.filterAll()
     let filterValue = state.filterValues.get(dimName);
     if(filterValue == null)
       continue;
 
-    if(dimName === 'text') {
-      filterValue = (filterValue as string).toLowerCase();
-      dim.filter(s => {
-        if(!s)
-          return false;
-        return (s as string).includes(filterValue as string);
-      });
+    const filterFn = state.customFilterFunctions.get(dimName);
+    // Apply either a custom filter function, or a default one - strict equality
+    if(filterFn) {
+      dim.filterFunction(filterFn(filterValue));
     } else {
-      if((filterValue as String) === '~') {
-        // Match non-empty values
-        dim.filter(s => s != null && s !== '');
-      } else {
-        dim.filter(filterValue);
-      }
+      dim.filter(filterValue);
     }
   }
   state.filtered = state.crossfilter.allFiltered();
@@ -112,14 +112,7 @@ export const expressionDatasetReducer = (
       let setFilterDimensions = (action as SetExpressionDatasetFilterDimensionsAction);
       
       state.crossfilter = crossfilter(state.raw);
-      state.filterDimensions = new Map<string, crossfilter.Dimension<ExpressionDataRow, string>>();
-      // Concat all the text columns into the 'text' dimension
-      state.filterDimensions.set('text', state.crossfilter.dimension(r => 
-        setFilterDimensions.textDimension.map(d => (r as any)[d]).join('|').toLowerCase()
-      ));
-      state.filterValues.set('text', '');
-      state.filterDimensions.set('uniprot_daphnia', state.crossfilter.dimension(r => r.uniprot_daphnia || ''));
-      state.filterValues.set('uniprot_daphnia', undefined);
+      state.filterDimensions = new Map<string, crossfilter.Dimension<ExpressionDataRow, NaturallyOrderedValue>>();
 
       // Save dimension names
       state.filterDimensionNames = setFilterDimensions.dimensions;
@@ -151,6 +144,22 @@ export const expressionDatasetReducer = (
         state.gene2idxMap.get(key)?.set(row.gene || '', i);
       }
 
+      state = onDatasetFilterChanged(state);
+      return {...state};
+
+    case ADD_CUSTOM_FILTER_DIMENSION:
+      let addCustomFilterDimension = (action as AddCustomExpressionDatasetFilterDimensionAction);
+      if(!state.filterDimensions || !state.crossfilter) {
+        console.error('Trying to add a custom filter dimension before SET_FILTER_DIMENSIONS was called');
+        return state;
+      }
+      state.filterDimensions.set(
+        addCustomFilterDimension.name, 
+        state.crossfilter.dimension(addCustomFilterDimension.selector)
+      );
+      if(addCustomFilterDimension.filterFn)
+        state.customFilterFunctions.set(addCustomFilterDimension.name, addCustomFilterDimension.filterFn);
+      // state.filterValues.set(addCustomFilterDimension.name, addCustomFilterDimension.defaultValue);
       state = onDatasetFilterChanged(state);
       return {...state};
 

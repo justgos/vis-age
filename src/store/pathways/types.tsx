@@ -1,11 +1,14 @@
 // import crossfilter from 'crossfilter2';
-import { Pathway } from '../../core/types'
+import { Pathway, PathwayNode, PathwayEdge } from '../../core/types'
 
 export type FilterValueType = string | number | boolean | undefined;
 
 export interface PathwaysState {
   lastUpdateTime : number;
   raw : Pathway[];
+  nodes : PathwayNode[];
+  nodeNameMap : Map<string , number>;
+  edges : PathwayEdge[];
   // filterValues : Map<string, FilterValueType>;
   // crossfilter? : crossfilter.Crossfilter<ExpressionDataRow>;
   // filterDimensions? : Map<string, crossfilter.Dimension<ExpressionDataRow, string>>;
