@@ -3,7 +3,7 @@ import { connect, ConnectedProps  } from 'react-redux';
 import { Classes, Checkbox, HTMLSelect } from "@blueprintjs/core";
 
 import { ExpressionDatasetState } from '../store/expression-dataset/types'
-import { updateFilter } from '../store/expression-dataset/actions'
+import { setFilterValue } from '../store/expression-dataset/actions'
 import { CombinedState } from '../store';
 import './FilterPanel.scss';
 
@@ -17,7 +17,7 @@ const mapStateToProps = (
 };
 
 const mapDispatchToProps = {
-  updateFilter
+  setFilterValue
 };
 
 const connector = connect(
@@ -31,7 +31,7 @@ type Props = PropsFromRedux & {
   //
 };
 
-export const FilterPanel = ({ filterValues, filterValueVocabulary, updateFilter } : Props) => {
+export const FilterPanel = ({ filterValues, filterValueVocabulary, setFilterValue } : Props) => {
   return (
     <div className="filter-panel">
       {[ 'start_age', 'end_age', 'sex' ].map(filter_param => 
@@ -45,7 +45,7 @@ export const FilterPanel = ({ filterValues, filterValueVocabulary, updateFilter 
             };
           })}
           value={filterValues.get(filter_param) as string} 
-          onChange={ evt => updateFilter(filter_param, (evt.target as HTMLSelectElement).value) } 
+          onChange={ evt => setFilterValue(filter_param, (evt.target as HTMLSelectElement).value) } 
         />
       )}
       <input 
@@ -53,12 +53,12 @@ export const FilterPanel = ({ filterValues, filterValueVocabulary, updateFilter 
         type="text" 
         placeholder="filter by any text field" 
         value={filterValues.get("text") as string || ''} 
-        onChange={ evt => updateFilter("text", evt.target.value) } 
+        onChange={ evt => setFilterValue("text", evt.target.value) } 
       />
       <Checkbox 
         className={`filter-element homolog-filter ${Classes.BUTTON}`} 
         checked={filterValues.get("uniprot_daphnia") != null} 
-        onChange={ evt => updateFilter("uniprot_daphnia", (evt.target as HTMLInputElement).checked ? "~" : undefined) }
+        onChange={ evt => setFilterValue("uniprot_daphnia", (evt.target as HTMLInputElement).checked ? "~" : undefined) }
       >
         has Daphnia homolog
       </Checkbox>

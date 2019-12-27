@@ -11,21 +11,28 @@ export interface ExpressionDatasetState {
   filterValueVocabulary : Map<string, Map<string, number>>;
   crossfilter? : crossfilter.Crossfilter<ExpressionDataRow>;
   filterDimensions? : Map<string, crossfilter.Dimension<ExpressionDataRow, string>>;
+  filterDimensionNames : string[];
   filtered : ExpressionDataRow[];
   raw2filtered : Map<number, number>;
 
-  gene2idxKey : (start_age? : string, end_age? : string, sex? : string) => string;
+  gene2idxKey : (...parts : string[]) => string;
   getByGene : (gene? : string) => ExpressionDataRow | null;
 };
 
-export const UPDATE_DATASET = "UPDATE_DATASET";
-export const UPDATE_FILTER = "UPDATE_FILTER";
+export const UPDATE_DATASET = 'UPDATE_DATASET';
+export const SET_FILTER_DIMENSIONS = 'SET_FILTER_DIMENSIONS';
+export const SET_FILTER_VALUE = 'SET_FILTER_VALUE';
 
 export interface UpdateExpressionDatasetAction {
   type : string;
   dataset : ExpressionDataRow[];
 };
-export interface UpdateExpressionDatasetFilterAction {
+export interface SetExpressionDatasetFilterDimensionsAction {
+  type : string;
+  dimensions : string[];
+  textDimension : string[];
+};
+export interface SetExpressionDatasetFilterValueAction {
   type : string;
   name : string;
   value : FilterValueType;
@@ -33,4 +40,5 @@ export interface UpdateExpressionDatasetFilterAction {
 
 export type ExpressionDatasetActionTypes = 
   UpdateExpressionDatasetAction 
-  | UpdateExpressionDatasetFilterAction;
+  | SetExpressionDatasetFilterDimensionsAction
+  | SetExpressionDatasetFilterValueAction;

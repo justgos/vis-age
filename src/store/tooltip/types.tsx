@@ -7,8 +7,8 @@ export interface TooltipState {
   content : ReactNode;
 };
 
-export const UPDATE_TOOLTIP = "UPDATE_TOOLTIP";
-export const HIDE_TOOLTIP = "HIDE_TOOLTIP";
+export const UPDATE_TOOLTIP = 'UPDATE_TOOLTIP';
+export const HIDE_TOOLTIP = 'HIDE_TOOLTIP';
 
 export interface UpdateTooltipAction {
   type : string;
