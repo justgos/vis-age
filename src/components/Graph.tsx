@@ -56,7 +56,7 @@ export const Graph = () => {
   // const ypos = (row : ExpressionDataRow) => 
   //   (-Math.log(Math.max(row.p_value || 0, 1e-300))) * 0.9;
 
-  const neutralColor = [0.7, 0.7, 0.7, 0.5];
+  const neutralColor = [0, 0, 0, 0.1];
   const warmColor = [251.0 / 255, 101.0 / 255, 66.0 / 255, 1.0];
   const coldColor = [55.0 / 255, 94.0 / 255, 151.0 / 255, 1.0];
 
@@ -65,7 +65,7 @@ export const Graph = () => {
   const colorAttr = useRef<THREE.BufferAttribute>();
   const sizeAttr = useRef<THREE.BufferAttribute>();
   // Setup point attribute buffers
-  const [ nodes, edgeMap, positions, sizes, colors, pointTree, edgePositions, edgeTexcoords, simulation ] = useMemo(
+  const [ nodes, edgeMap, positions, sizes, colors, edgePositions, edgeTexcoords, simulation ] = useMemo(
     () => {
       console.log('pathways.raw.length', pathways.raw.length);
       const nodes : GraphNode[] = [];
@@ -77,7 +77,6 @@ export const Graph = () => {
       const colors : number[] = [];
       const edgePositions : number[] = [];
       const edgeTexcoords : number[] = [];
-      const pointTree = new RBush();
 
       if(pathways.raw.length < 1) {
         return [ 
@@ -86,7 +85,6 @@ export const Graph = () => {
           new Float32Array(positions), 
           new Float32Array(sizes), 
           new Float32Array(colors), 
-          pointTree,
           new Float32Array(edgePositions),
           new Float32Array(edgeTexcoords),
           forceSimulation(),
@@ -327,16 +325,12 @@ export const Graph = () => {
         edgePositions[i * 6 + 5] = positions[edge.target * 3 + 2];
       }
 
-      pointTree.clear();
-      pointTree.load(simNodes);
-
       return [ 
         nodes,
         edgeMap,
         new Float32Array(positions), 
         new Float32Array(sizes), 
         new Float32Array(colors), 
-        pointTree,
         new Float32Array(edgePositions),
         new Float32Array(edgeTexcoords),
         simulation,
@@ -345,15 +339,23 @@ export const Graph = () => {
     [pathways.lastUpdateTime, pathways.raw]
   );
 
-  const refExpressionRows = useMemo(
+  const [ refExpressionRows, pointTree ] = useMemo(
     () => {
       const refExpressionRows : number[] = [];
-      if(!colorAttr.current || !sizeAttr.current)
-        return refExpressionRows;
+      const pointTree = new RBush();
+      if(!colorAttr.current || !sizeAttr.current) {
+        return [
+          refExpressionRows,
+          pointTree,
+        ];
+      }
       const colors = [];
       const sizes = [];
 
       console.log('filtered')
+
+      const simNodes = simulation.nodes();
+      const filteredNodes : GraphNode[] = [];
 
       for(let i = 0; i < nodes.length; i++) {
         const node = nodes[i];
@@ -365,6 +367,7 @@ export const Graph = () => {
           // console.log('geneName', geneName);
           const expressionData = expressionDataset.getByGene(geneName);
           if(expressionData != null) {
+            filteredNodes.push(simNodes[i] as GraphNode);
             refExpressionRow = expressionData.__id || -1;
             let foldChange = expressionData.fold_change_log2 || 0;
             size = Math.sqrt(Math.abs(foldChange)) * 2.0;
@@ -379,12 +382,18 @@ export const Graph = () => {
         sizes.push(size);
       }
 
+      // pointTree.clear();
+      pointTree.load(filteredNodes);
+
       colorAttr.current.array = new Float32Array(colors);
       colorAttr.current.needsUpdate = true;
       sizeAttr.current.array = new Float32Array(sizes);
       sizeAttr.current.needsUpdate = true;
 
-      return refExpressionRows;
+      return [
+        refExpressionRows,
+        pointTree,
+      ];
     },
     [expressionDataset.filtered, colorAttr.current, sizeAttr.current]
   );

@@ -27,7 +27,7 @@ export class GraphEdgeShader extends THREE.ShaderMaterial {
           // gl_FragColor = vColor * texture2D(pointTexture, gl_PointCoord);
           gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
           gl_FragColor.w *= (1.0 - pow(texcoord.x, 4.0));
-          gl_FragColor.w *= 0.3;
+          gl_FragColor.w *= 0.2;
         }
       `,
       blendSrc: THREE.SrcAlphaFactor,

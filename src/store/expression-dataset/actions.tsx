@@ -1,10 +1,12 @@
 import { ExpressionDataRow } from '../../core/types'
 import { 
   UpdateExpressionDatasetAction, 
-  UpdateExpressionDatasetFilterAction, 
+  SetExpressionDatasetFilterDimensionsAction,
+  SetExpressionDatasetFilterValueAction, 
   UPDATE_DATASET, 
-  UPDATE_FILTER,
+  SET_FILTER_VALUE,
   FilterValueType,
+  SET_FILTER_DIMENSIONS,
 } from './types'
 
 export const updateDataset = (dataset : ExpressionDataRow[]) : UpdateExpressionDatasetAction => {
@@ -14,9 +16,20 @@ export const updateDataset = (dataset : ExpressionDataRow[]) : UpdateExpressionD
   }
 };
 
-export const updateFilter = (name : string, value : FilterValueType) : UpdateExpressionDatasetFilterAction => {
+export const setFilterDimensions = (
+  dimensions : string[], 
+  textDimension : string[]
+) : SetExpressionDatasetFilterDimensionsAction => {
   return {
-    type: UPDATE_FILTER,
+    type: SET_FILTER_DIMENSIONS,
+    dimensions,
+    textDimension,
+  }
+};
+
+export const setFilterValue = (name : string, value : FilterValueType) : SetExpressionDatasetFilterValueAction => {
+  return {
+    type: SET_FILTER_VALUE,
     name,
     value,
   }

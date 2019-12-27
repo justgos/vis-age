@@ -8,7 +8,7 @@ import { useGesture } from 'react-use-gesture'
 
 import { dpi } from './config'
 import { CsvParseResult, ExpressionDataRow, Pathway, GestureData } from './core/types'
-import { updateDataset } from './store/expression-dataset/actions'
+import { updateDataset, setFilterDimensions } from './store/expression-dataset/actions'
 import { updatePathways } from './store/pathways/actions'
 import Tooltip from './components/Tooltip'
 import FilterPanel from './components/FilterPanel'
@@ -18,8 +18,9 @@ import './App.scss';
 import Graph from './components/Graph';
 
 const mapDispatchToProps = {
-  updateDataset: updateDataset,
-  updatePathways: updatePathways,
+  updateDataset,
+  setFilterDimensions,
+  updatePathways,
 };
 
 const connector = connect(
@@ -27,7 +28,11 @@ const connector = connect(
   mapDispatchToProps
 );
 
-function App({ updateDataset, updatePathways } : Partial<ConnectedProps<typeof connector>>) {
+function App({
+  updateDataset, 
+  setFilterDimensions, 
+  updatePathways,
+} : Partial<ConnectedProps<typeof connector>>) {
   const [ loading, setLoading ] = useState(true);
   useEffect(() => {
     const loadData = async () => {
@@ -49,6 +54,10 @@ function App({ updateDataset, updatePathways } : Partial<ConnectedProps<typeof c
           );
       });
       updateDataset?.(csvData.data as ExpressionDataRow[]);
+      setFilterDimensions?.(
+        [ 'start_age', 'end_age', 'sex' ],
+        [ 'tissue', 'subtissue', 'cell_ontology_class', 'gene', 'uniprot_mouse', 'uniprot_daphnia' ]
+      );
 
       // Load pathways
       let pathways = await axios.get('./data/pathways.json');

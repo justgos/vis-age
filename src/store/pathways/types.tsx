@@ -12,8 +12,8 @@ export interface PathwaysState {
   // filtered : ExpressionDataRow[];
 };
 
-export const UPDATE_PATHWAYS = "UPDATE_PATHWAYS";
-export const UPDATE_FILTER = "UPDATE_FILTER";
+export const UPDATE_PATHWAYS = 'UPDATE_PATHWAYS';
+export const UPDATE_FILTER = 'UPDATE_FILTER';
 
 export interface UpdatePathwaysAction {
   type : string;
