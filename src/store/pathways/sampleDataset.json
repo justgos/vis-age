@@ -1,0 +1,86 @@
+[
+    {
+        "type": "pathway",
+        "name": "NTF4 activates NTRK2 (TRKB) signaling",
+        "pathwayComponent": [
+            {
+                "type": "reaction",
+                "name": "NTF4-bound NTRK2 dimerizes",
+                "conversionDirection": "LEFT_TO_RIGHT",
+                "left": [
+                    {
+                        "type": "molecule",
+                        "name": "NTF4:NTRK2",
+                        "cellularLocation": "plasma membrane",
+                        "feature": []
+                    },
+                    {
+                        "type": "molecule",
+                        "name": "TrKB",
+                        "cellularLocation": "plasma membrane",
+                        "feature": [],
+                        "entityReference": {
+                            "name": "NTRK2_HUMAN",
+                            "xref": {
+                                "id": "q16620",
+                                "db": "uniprot"
+                            },
+                            "gene": {
+                                "name": "Ntrk2",
+                                "type": "protein-coding",
+                                "desc": "BDNF/NT-3 growth factors receptor"
+                            }
+                        }
+                    }
+                ],
+                "right": [
+                    {
+                        "type": "molecule",
+                        "name": "NTF4:NTRK2 homodimer",
+                        "cellularLocation": "plasma membrane",
+                        "feature": []
+                    }
+                ]
+            },
+            {
+                "type": "reaction",
+                "name": "NTF4 binds NTRK2",
+                "conversionDirection": "LEFT_TO_RIGHT",
+                "left": [
+                    {
+                        "type": "molecule",
+                        "name": "NTF4 homodimer",
+                        "cellularLocation": "extracellular region",
+                        "feature": []
+                    },
+                    {
+                        "type": "molecule",
+                        "name": "TrKB",
+                        "cellularLocation": "plasma membrane",
+                        "feature": [],
+                        "entityReference": {
+                            "name": "NTRK2_HUMAN",
+                            "xref": {
+                                "id": "q16620",
+                                "db": "uniprot"
+                            },
+                            "gene": {
+                                "name": "Ntrk2",
+                                "type": "protein-coding",
+                                "desc": "BDNF/NT-3 growth factors receptor"
+                            }
+                        }
+                    }
+                ],
+                "right": [
+                    {
+                        "type": "molecule",
+                        "name": "NTF4:NTRK2",
+                        "cellularLocation": "plasma membrane",
+                        "feature": []
+                    }
+                ]
+            }
+        ]
+    }
+]

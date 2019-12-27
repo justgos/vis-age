@@ -8,7 +8,11 @@ import { useGesture } from 'react-use-gesture'
 
 import { dpi } from './config'
 import { CsvParseResult, ExpressionDataRow, Pathway, GestureData } from './core/types'
-import { updateDataset, setFilterDimensions } from './store/expression-dataset/actions'
+import {
+  updateDataset, 
+  setFilterDimensions, 
+  addCustomFilterDimension
+} from './store/expression-dataset/actions'
 import { updatePathways } from './store/pathways/actions'
 import Tooltip from './components/Tooltip'
 import FilterPanel from './components/FilterPanel'
@@ -20,6 +24,7 @@ import Graph from './components/Graph';
 const mapDispatchToProps = {
   updateDataset,
   setFilterDimensions,
+  addCustomFilterDimension,
   updatePathways,
 };
 
@@ -31,6 +36,7 @@ const connector = connect(
 function App({
   updateDataset, 
   setFilterDimensions, 
+  addCustomFilterDimension,
   updatePathways,
 } : Partial<ConnectedProps<typeof connector>>) {
   const [ loading, setLoading ] = useState(true);
@@ -55,8 +61,32 @@ function App({
       });
       updateDataset?.(csvData.data as ExpressionDataRow[]);
       setFilterDimensions?.(
-        [ 'start_age', 'end_age', 'sex' ],
-        [ 'tissue', 'subtissue', 'cell_ontology_class', 'gene', 'uniprot_mouse', 'uniprot_daphnia' ]
+        [ 'start_age', 'end_age', 'sex' ]
+      );
+      // Text column filter
+      const textColumns = [
+        'tissue', 'subtissue', 'cell_ontology_class', 'gene', 'uniprot_mouse', 'uniprot_daphnia'
+      ];
+      addCustomFilterDimension?.(
+        'text',
+        (row : ExpressionDataRow) => 
+          textColumns.map(d => (row as any)[d]).join('|').toLowerCase(),
+        (filterValue) => {
+          return v => (v as string).includes((filterValue as string).toLowerCase());
+        }
+      );
+      // Daphnia homolog presence filter
+      addCustomFilterDimension?.(
+        'uniprot_daphnia',
+        (row : ExpressionDataRow) => 
+          row.uniprot_daphnia || '',
+        (filterValue) => {
+          if((filterValue as String) === '~') {
+            // Match non-empty values
+            return v => v != null && v !== '';
+          }
+          return v => v === filterValue;
+        }
       );
 
       // Load pathways

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useThree, useFrame } from 'react-three-fiber';
 // import * as math from 'mathjs';
-import { forceSimulation, forceManyBody, forceLink, forceCenter } from 'd3-force';
+import { forceSimulation, forceManyBody, forceLink } from 'd3-force';
 import RBush from 'rbush';
 import knn from 'rbush-knn';
 
@@ -10,11 +10,10 @@ import { store } from '../store';
 import { updateTooltip } from '../store/tooltip/actions'
 import { PointShader } from '../shaders/PointShader';
 import { GraphEdgeShader } from '../shaders/GraphEdgeShader'
-import { PathwayEntity, Molecule, Control, TemplateReaction, Reaction } from '../core/types';
+import { PathwayNode, PathwayEdge } from '../core/types';
 import { BufferAttribute } from 'three';
 
-interface GraphNode extends Molecule {
-  __id : number;
+interface GraphNode extends PathwayNode {
   x : number;
   y : number;
   vx : number;
@@ -23,12 +22,11 @@ interface GraphNode extends Molecule {
   maxX? : number;
   minY? : number;
   maxY? : number;
-  location : number | undefined;
+  location : number;
 }
 
-interface GraphEdge {
-  source : number;
-  target : number;
+interface GraphEdge extends PathwayEdge {
+  //
 }
 
 export const Graph = () => {
@@ -51,11 +49,7 @@ export const Graph = () => {
     updateData();
   }, []);
 
-  // const xpos = (row : ExpressionDataRow) => 
-  //   (row.fold_change_log2 || 0) * 25.0;
-  // const ypos = (row : ExpressionDataRow) => 
-  //   (-Math.log(Math.max(row.p_value || 0, 1e-300))) * 0.9;
-
+  const locationDistance = 250;
   const neutralColor = [0, 0, 0, 0.1];
   const warmColor = [251.0 / 255, 101.0 / 255, 66.0 / 255, 1.0];
   const coldColor = [55.0 / 255, 94.0 / 255, 151.0 / 255, 1.0];
@@ -69,7 +63,6 @@ export const Graph = () => {
     () => {
       console.log('pathways.raw.length', pathways.raw.length);
       const nodes : GraphNode[] = [];
-      const nodeNameMap = new Map<string, number>();
       const edges : GraphEdge[] = [];
       const edgeMap = new Map<number, GraphEdge[]>();
       const positions : number[] = [];
@@ -91,17 +84,10 @@ export const Graph = () => {
         ];
       }
 
-      const addNode = (data : PathwayEntity) => {
-        let name = data.name;
-        // if((data.type === 'molecule') && (data as Molecule).entityReference?.name)
-        //   name = (data as Molecule).entityReference?.name || name;
-        if(nodeNameMap.has(name))
-          return nodeNameMap.get(name) as number;
-        const id = nodes.length;
+      const addNode = (data : PathwayNode) => {
         let node : GraphNode = {
           ...data,
-          __id: id,
-          location: (data.type === 'molecule') ? 0 :  undefined,
+          location: 0,
           x: (Math.random() - 0.5) * 1000,
           y: (Math.random() - 0.5) * 1000,
           vx: 0,
@@ -109,8 +95,8 @@ export const Graph = () => {
         };
         let color = neutralColor;
         let size = 1.0;
-        if(data.type === 'molecule' && (data as Molecule).cellularLocation) {
-          const cellularLocation = (data as Molecule).cellularLocation;
+        if(data.type === 'molecule' && data.cellularLocation) {
+          const cellularLocation = data.cellularLocation;
           if([
             'extracellular region',
             'external side of plasma membrane',
@@ -150,7 +136,6 @@ export const Graph = () => {
             node.location = -5;
           }
         }
-        nodeNameMap.set(node.name, id);
         nodes.push(node);
         positions.push(
           node.x,
@@ -159,103 +144,52 @@ export const Graph = () => {
         );
         sizes.push(size);
         colors.push(...color);
-        return id;
       };
-      const addEdge = (source : number, target : number) => {
-        let sourceEdges = edgeMap.get(source);
+      const addEdge = (data : GraphEdge) => {
+        const edge = {
+          ...data,
+        }
+        let sourceEdges = edgeMap.get(data.source);
         if(!sourceEdges) {
           sourceEdges = [];
-          edgeMap.set(source, sourceEdges);
+          edgeMap.set(data.source, sourceEdges);
         }
-        sourceEdges.push({ source, target });
-        edges.push({ source, target });
+        sourceEdges.push(edge);
+        let targetEdges = edgeMap.get(data.target);
+        if(!targetEdges) {
+          targetEdges = [];
+          edgeMap.set(data.target, targetEdges);
+        }
+        targetEdges.push(edge);
+        
+        edges.push(edge);
         edgePositions.push(
-          positions[source * 3],
-          positions[source * 3 + 1],
-          positions[source * 3 + 2],
-          positions[target * 3],
-          positions[target * 3 + 1],
-          positions[target * 3 + 2]
+          positions[data.source * 3],
+          positions[data.source * 3 + 1],
+          positions[data.source * 3 + 2],
+          positions[data.target * 3],
+          positions[data.target * 3 + 1],
+          positions[data.target * 3 + 2]
         );
         edgeTexcoords.push(0.0, 0.0, 1.0, 1.0);
       }
 
-      for(let i_p = 0; i_p < pathways.raw.length; i_p++) {
-        const pathway = pathways.raw[i_p];
-        for(let i_r = 0; i_r < pathway.pathwayComponent.length; i_r++) {
-          const reactionContainer = pathway.pathwayComponent[i_r];
+      for(let i = 0; i < pathways.nodes.length; i++) {
+        addNode(pathways.nodes[i]);
+      }
+      for(let i = 0; i < pathways.edges.length; i++) {
+        addEdge(pathways.edges[i]);
+      }
 
-          let reactionNodeId = addNode(reactionContainer);
-
-          // Extract the contained reaction
-          let reaction : Reaction;
-          if(reactionContainer.type === 'control') {
-            reaction = (reactionContainer as Control).controlled;
-
-            let moleculeNodeId = addNode((reactionContainer as Control).controller);
-            addEdge(moleculeNodeId, reactionNodeId);
-            // addEdge(reactionNodeId, moleculeNodeId);
-          } else if(reactionContainer.type === 'template_reaction') {
-            if((reactionContainer as TemplateReaction).template) {
-              let moleculeNodeId = addNode((reactionContainer as TemplateReaction).template as PathwayEntity);
-              addEdge(moleculeNodeId, reactionNodeId);
-              // addEdge(reactionNodeId, moleculeNodeId);
-            }
-
-            for(let i_m = 0; i_m < (reactionContainer as TemplateReaction).product.length; i_m++) {
-              const molecule = (reactionContainer as TemplateReaction).product[i_m];
-              let moleculeNodeId = addNode(molecule);
-              addEdge(reactionNodeId, moleculeNodeId);
-              // addEdge(reactionNodeId, moleculeNodeId);
-            }
-            reaction = reactionContainer as Reaction;
-          } else {
-            reaction = reactionContainer as Reaction;
-          }
-
-          // // Process reaction direction
-          // if(reaction.conversionDirection === 'LEFT-TO-RIGHT') {
-          //   //
-          // } else if(reaction.conversionDirection === 'RIGHT-TO-LEFT') {
-          //   //
-          // } else {
-          //   // REVERSIBLE
-          // }
-
-          // Process reaction participants
-          if(reaction.left) {
-            for(let i_m = 0; i_m < reaction.left.length; i_m++) {
-              const molecule = reaction.left[i_m];
-              let moleculeNodeId = addNode(molecule);
-              // addEdge(reactionNodeId, moleculeNodeId);
-
-              if(reaction.conversionDirection === 'LEFT_TO_RIGHT') {
-                addEdge(moleculeNodeId, reactionNodeId);
-              } else if(reaction.conversionDirection === 'RIGHT_TO_LEFT') {
-                addEdge(reactionNodeId, moleculeNodeId);
-              } else {
-                // REVERSIBLE
-                addEdge(moleculeNodeId, reactionNodeId);
-                // addEdge(reactionNodeId, moleculeNodeId);
-              }
-            }
-          }
-          if(reaction.right) {
-            for(let i_m = 0; i_m < reaction.right.length; i_m++) {
-              const molecule = reaction.right[i_m];
-              let moleculeNodeId = addNode(molecule);
-              // addEdge(reactionNodeId, moleculeNodeId);
-
-              if(reaction.conversionDirection === 'LEFT_TO_RIGHT') {
-                addEdge(reactionNodeId, moleculeNodeId);
-              } else if(reaction.conversionDirection === 'RIGHT_TO_LEFT') {
-                addEdge(moleculeNodeId, reactionNodeId);
-              } else {
-                // REVERSIBLE
-                // addEdge(moleculeNodeId, reactionNodeId);
-                addEdge(reactionNodeId, moleculeNodeId);
-              }
-            }
+      for(let i = 0; i < nodes.length; i++) {
+        const node = nodes[i];
+        if(node.type === 'reaction') {
+          const adjacentEdges = edgeMap.get(node.__id);
+          if(adjacentEdges && adjacentEdges.length > 0) {
+            let meanLocation = adjacentEdges.map(e => 
+              nodes[e.source === node.__id ? e.target : e.source].location
+            ).reduce((a, b) => a + b, 0) / adjacentEdges.length;
+            node.location = meanLocation;
           }
         }
       }
@@ -267,13 +201,21 @@ export const Graph = () => {
           ...n,
         };
       }));
-      forceLink()
       
-      let flatEdges = Array.from(edgeMap).map(entry => entry[1]);
+      let flatEdges = JSON.parse(JSON.stringify(
+        Array.from(edgeMap).map(entry => entry[1])
+      )) as GraphEdge[][];
       simulation
-        .force('charge', forceManyBody().strength(-100))
+        .force('charge', forceManyBody().strength(-30))
         .force('link', forceLink(
           flatEdges.reduce((a, b) => [...a, ...b], [])
+        ).distance(l => 
+          Math.max(
+            Math.abs(
+              ((l as any).target as GraphNode).location - ((l as any).source as GraphNode).location
+            ) * locationDistance,
+            10
+          )
         ))
         // .force('center', forceCenter());
         .force('center', structuringForce(width / 2, height / 2, 
@@ -281,7 +223,7 @@ export const Graph = () => {
             return undefined;
           }, 
           (d) => {
-            return d.location != null ? d.location * 500 : undefined;
+            return d.location != null ? d.location * locationDistance : undefined;
           })
         );
       simulation.stop();
@@ -336,7 +278,7 @@ export const Graph = () => {
         simulation,
       ];
     },
-    [pathways.lastUpdateTime, pathways.raw]
+    [pathways.lastUpdateTime, pathways.nodes, pathways.edges]
   );
 
   const [ refExpressionRows, pointTree ] = useMemo(
@@ -578,7 +520,7 @@ const structuringForce = (
 ) => {
   let constant = (_ : number) => {return () => (_)}
   // var strength = constant(2.0),
-  var strength : ((d : GraphNode) => number) = (d : GraphNode) => d.location === 0 ? 0.5 : 1.0,
+  var strength : ((d : GraphNode) => number) = (d : GraphNode) => d.location === 0 ? 0.2 : 5.0,
       nodes : GraphNode[],
       strengths : number[],
       xz : (number | undefined)[],
@@ -608,9 +550,9 @@ const structuringForce = (
     for (let i = 0, n = nodes.length; i < n; ++i) {
       node = nodes[i]
       if(xz[i] != null)
-        node.vx += ((xz[i] as number) - node.x) * strengths[i] * alpha
+        node.vx += ((xz[i] as number) - node.x) * strengths[i] * alpha;
       if(yz[i] != null)
-        node.vy += ((yz[i] as number) - node.y) * strengths[i] * alpha
+        node.vy += ((yz[i] as number) - node.y) * strengths[i] * alpha;
     }
   }
 
