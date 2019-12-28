@@ -7,7 +7,7 @@ import { Canvas, CanvasContext } from 'react-three-fiber';
 import { useGesture } from 'react-use-gesture'
 
 import { dpi } from './config'
-import { CsvParseResult, ExpressionDataRow, Pathway, GestureData, MouseMoveHook, MouseMoveHooks } from './core/types'
+import { CsvParseResult, ExpressionDataRow, Pathway, GestureData, MouseMoveHook, MouseMoveHooks, PathwayGraphData } from './core/types'
 import {
   updateDataset, 
   setFilterDimensions, 
@@ -96,7 +96,7 @@ function App({
 
       // Load pathways
       let pathways = await axios.get('./data/pathways.json');
-      updatePathways?.(pathways.data as Pathway[]);
+      updatePathways?.(pathways.data as PathwayGraphData);
 
       setLoading(false);
     };

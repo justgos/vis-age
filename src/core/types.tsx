@@ -47,8 +47,8 @@ export interface PathwayEntity {
 
 export interface Gene {
   name : string;
-  type : string;
-  desc : string;
+  // type : string;
+  // desc : string;
 };
 
 export interface XRef {
@@ -102,4 +102,9 @@ export interface PathwayNode {
 export interface PathwayEdge {
   source : number;
   target : number;
+}
+
+export interface PathwayGraphData {
+  nodes : PathwayNode[];
+  edges : number[][];
 }

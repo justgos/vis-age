@@ -37,7 +37,7 @@ const dimensionLabels : { [dimension : string] : string } = {
   'sex': 'Sex',
   'tissue': 'Tissue',
   'subtissue': 'Subtissue',
-  'cell_onlotology_class': 'Cell type',
+  'cell_ontology_class': 'Cell type',
 };
 
 export const FilterPanel = ({ filterValues, filterValueVocabulary, setFilterValue } : Props) => {
@@ -57,7 +57,7 @@ export const FilterPanel = ({ filterValues, filterValueVocabulary, setFilterValu
       >
         has Daphnia homolog
       </Checkbox>
-      {[ 'start_age', 'end_age', 'sex', 'tissue' ].map(filter_param => 
+      {[ 'start_age', 'end_age', 'sex', 'tissue', 'subtissue', 'cell_ontology_class' ].map(filter_param => 
         <div key={filter_param} className="filter-element">
           <div className="filter-element-label">
             {dimensionLabels[filter_param]}

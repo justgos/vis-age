@@ -1,86 +1,170 @@
-[
-    {
-        "type": "pathway",
-        "name": "NTF4 activates NTRK2 (TRKB) signaling",
-        "pathwayComponent": [
-            {
-                "type": "reaction",
-                "name": "NTF4-bound NTRK2 dimerizes",
-                "conversionDirection": "LEFT_TO_RIGHT",
-                "left": [
-                    {
-                        "type": "molecule",
-                        "name": "NTF4:NTRK2",
-                        "cellularLocation": "plasma membrane",
-                        "feature": []
-                    },
-                    {
-                        "type": "molecule",
-                        "name": "TrKB",
-                        "cellularLocation": "plasma membrane",
-                        "feature": [],
-                        "entityReference": {
-                            "name": "NTRK2_HUMAN",
-                            "xref": {
-                                "id": "q16620",
-                                "db": "uniprot"
-                            },
-                            "gene": {
-                                "name": "Ntrk2",
-                                "type": "protein-coding",
-                                "desc": "BDNF/NT-3 growth factors receptor"
-                            }
-                        }
-                    }
-                ],
-                "right": [
-                    {
-                        "type": "molecule",
-                        "name": "NTF4:NTRK2 homodimer",
-                        "cellularLocation": "plasma membrane",
-                        "feature": []
-                    }
-                ]
-            },
-            {
-                "type": "reaction",
-                "name": "NTF4 binds NTRK2",
-                "conversionDirection": "LEFT_TO_RIGHT",
-                "left": [
-                    {
-                        "type": "molecule",
-                        "name": "NTF4 homodimer",
-                        "cellularLocation": "extracellular region",
-                        "feature": []
-                    },
-                    {
-                        "type": "molecule",
-                        "name": "TrKB",
-                        "cellularLocation": "plasma membrane",
-                        "feature": [],
-                        "entityReference": {
-                            "name": "NTRK2_HUMAN",
-                            "xref": {
-                                "id": "q16620",
-                                "db": "uniprot"
-                            },
-                            "gene": {
-                                "name": "Ntrk2",
-                                "type": "protein-coding",
-                                "desc": "BDNF/NT-3 growth factors receptor"
-                            }
-                        }
-                    }
-                ],
-                "right": [
-                    {
-                        "type": "molecule",
-                        "name": "NTF4:NTRK2",
-                        "cellularLocation": "plasma membrane",
-                        "feature": []
-                    }
-                ]
+{
+    "nodes": [
+        {
+            "__id": 0,
+            "type": "reaction",
+            "name": "NTF4-bound NTRK2 dimers trans-autophosphorylate"
+        },
+        {
+            "__id": 1,
+            "type": "complex",
+            "name": "NTF4:NTRK2"
+        },
+        {
+            "__id": 2,
+            "type": "molecule",
+            "name": "TrKB",
+            "cellularLocation": "plasma membrane",
+            "entityReference": {
+                "name": "NTRK2_HUMAN",
+                "xref": {
+                    "id": "q16620",
+                    "db": "uniprot"
+                },
+                "gene": {
+                    "name": "Ntrk2"
+                }
             }
+        },
+        {
+            "__id": 3,
+            "type": "molecule",
+            "name": "ATP",
+            "cellularLocation": "cytosol",
+            "entityReference": {
+                "name": "ATP",
+                "xref": {
+                    "id": "57299",
+                    "db": "chebi"
+                }
+            }
+        },
+        {
+            "__id": 4,
+            "type": "complex",
+            "name": "NT-4:p-5Y-TRKB"
+        },
+        {
+            "__id": 5,
+            "type": "molecule",
+            "name": "p-5Y-TrKB",
+            "cellularLocation": "plasma membrane",
+            "entityReference": {
+                "name": "NTRK2_HUMAN",
+                "xref": {
+                    "id": "q16620",
+                    "db": "uniprot"
+                },
+                "gene": {
+                    "name": "Ntrk2"
+                }
+            }
+        },
+        {
+            "__id": 6,
+            "type": "molecule",
+            "name": "ADP",
+            "cellularLocation": "cytosol",
+            "entityReference": {
+                "name": "ADP",
+                "xref": {
+                    "id": "87518",
+                    "db": "chebi"
+                }
+            }
+        },
+        {
+            "__id": 7,
+            "type": "reaction",
+            "name": "NTF4-bound NTRK2 dimerizes"
+        },
+        {
+            "__id": 8,
+            "type": "complex",
+            "name": "NTF4 homodimer"
+        },
+        {
+            "__id": 9,
+            "type": "reaction",
+            "name": "NTF4 binds NTRK2"
+        },
+        {
+            "__id": 10,
+            "type": "molecule",
+            "name": "NTF4",
+            "cellularLocation": "extracellular region",
+            "entityReference": {
+                "name": "NTF4_HUMAN",
+                "xref": {
+                    "id": "p34130",
+                    "db": "uniprot"
+                },
+                "gene": {
+                    "name": "Ntf5"
+                }
+            }
+        }
+    ],
+    "edges": [
+        [
+            1,
+            0
+        ],
+        [
+            2,
+            0
+        ],
+        [
+            3,
+            0
+        ],
+        [
+            0,
+            4
+        ],
+        [
+            0,
+            5
+        ],
+        [
+            0,
+            6
+        ],
+        [
+            8,
+            7
+        ],
+        [
+            2,
+            7
+        ],
+        [
+            2,
+            7
+        ],
+        [
+            7,
+            1
+        ],
+        [
+            7,
+            2
+        ],
+        [
+            10,
+            9
+        ],
+        [
+            2,
+            9
+        ],
+        [
+            9,
+            8
+        ],
+        [
+            9,
+            2
         ]
-    }
-]
+    ]
+}
