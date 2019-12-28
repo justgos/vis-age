@@ -15,6 +15,15 @@ export interface CsvParseResult {
   data : Object[];
 };
 
+export type MouseMoveHook = (x : number, y : number) => void;
+export interface MouseMoveHooks {
+  hooks: Map<number, MouseMoveHook>;
+  nextId: number;
+}
+export interface ObservesMouseMove {
+  mouseMoveHooks : MouseMoveHooks;
+};
+
 export interface ExpressionDataRow {
   __id? : number;
   start_age? : string;
@@ -56,6 +65,10 @@ export interface EntityReference {
 export interface Molecule extends PathwayEntity {
   cellularLocation? : string;
   entityReference? : EntityReference;
+};
+
+export interface Complex extends Molecule {
+  component : (Complex | Molecule)[];
 };
 
 export interface Reaction extends PathwayEntity {

@@ -7,6 +7,7 @@ import {
   Molecule, 
   TemplateReaction, 
   PathwayNode,
+  Complex,
 } from '../../core/types'
 import { 
   PathwaysState, 
@@ -49,6 +50,15 @@ const parsePathways = (state : PathwaysState) : PathwaysState => {
     state.nodeNameMap.set(node.name, id);
     return id;
   };
+  const addNodes = (data : PathwayEntity) => {
+    const ids = [];
+    if(data.type === 'complex') {
+      (data as Complex).component.map(c => addNodes(c)).forEach(ii => ids.push(...ii));
+    } else {
+      ids.push(addNode(data));
+    }
+    return ids
+  };
 
   const addEdge = (source : number, target : number) => {
     state.edges.push({ source, target });
@@ -66,20 +76,20 @@ const parsePathways = (state : PathwaysState) : PathwaysState => {
       if(reactionContainer.type === 'control') {
         reaction = (reactionContainer as Control).controlled;
 
-        let moleculeNodeId = addNode((reactionContainer as Control).controller);
-        addEdge(moleculeNodeId, reactionNodeId);
+        let moleculeNodeIds = addNodes((reactionContainer as Control).controller);
+        moleculeNodeIds.forEach(m => addEdge(m, reactionNodeId));
         // addEdge(reactionNodeId, moleculeNodeId);
       } else if(reactionContainer.type === 'template_reaction') {
         if((reactionContainer as TemplateReaction).template) {
-          let moleculeNodeId = addNode((reactionContainer as TemplateReaction).template as PathwayEntity);
-          addEdge(moleculeNodeId, reactionNodeId);
+          let moleculeNodeIds = addNodes((reactionContainer as TemplateReaction).template as PathwayEntity);
+          moleculeNodeIds.forEach(m => addEdge(m, reactionNodeId));
           // addEdge(reactionNodeId, moleculeNodeId);
         }
 
         for(let i_m = 0; i_m < (reactionContainer as TemplateReaction).product.length; i_m++) {
           const molecule = (reactionContainer as TemplateReaction).product[i_m];
-          let moleculeNodeId = addNode(molecule);
-          addEdge(reactionNodeId, moleculeNodeId);
+          let moleculeNodeIds = addNodes(molecule);
+          moleculeNodeIds.forEach(m => addEdge(m, reactionNodeId));
           // addEdge(reactionNodeId, moleculeNodeId);
         }
         reaction = reactionContainer as Reaction;
@@ -100,16 +110,16 @@ const parsePathways = (state : PathwaysState) : PathwaysState => {
       if(reaction.left) {
         for(let i_m = 0; i_m < reaction.left.length; i_m++) {
           const molecule = reaction.left[i_m];
-          let moleculeNodeId = addNode(molecule);
+          let moleculeNodeIds = addNodes(molecule);
           // addEdge(reactionNodeId, moleculeNodeId);
 
           if(reaction.conversionDirection === 'LEFT_TO_RIGHT') {
-            addEdge(moleculeNodeId, reactionNodeId);
+            moleculeNodeIds.forEach(m => addEdge(m, reactionNodeId));
           } else if(reaction.conversionDirection === 'RIGHT_TO_LEFT') {
-            addEdge(reactionNodeId, moleculeNodeId);
+            moleculeNodeIds.forEach(m => addEdge(reactionNodeId, m));
           } else {
             // REVERSIBLE
-            addEdge(moleculeNodeId, reactionNodeId);
+            moleculeNodeIds.forEach(m => addEdge(m, reactionNodeId));
             // addEdge(reactionNodeId, moleculeNodeId);
           }
         }
@@ -117,17 +127,17 @@ const parsePathways = (state : PathwaysState) : PathwaysState => {
       if(reaction.right) {
         for(let i_m = 0; i_m < reaction.right.length; i_m++) {
           const molecule = reaction.right[i_m];
-          let moleculeNodeId = addNode(molecule);
+          let moleculeNodeIds = addNodes(molecule);
           // addEdge(reactionNodeId, moleculeNodeId);
 
           if(reaction.conversionDirection === 'LEFT_TO_RIGHT') {
-            addEdge(reactionNodeId, moleculeNodeId);
+            moleculeNodeIds.forEach(m => addEdge(reactionNodeId, m));
           } else if(reaction.conversionDirection === 'RIGHT_TO_LEFT') {
-            addEdge(moleculeNodeId, reactionNodeId);
+            moleculeNodeIds.forEach(m => addEdge(m, reactionNodeId));
           } else {
             // REVERSIBLE
             // addEdge(moleculeNodeId, reactionNodeId);
-            addEdge(reactionNodeId, moleculeNodeId);
+            moleculeNodeIds.forEach(m => addEdge(reactionNodeId, m));
           }
         }
       }

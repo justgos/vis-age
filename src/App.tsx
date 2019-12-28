@@ -3,15 +3,16 @@ import { connect, ConnectedProps } from 'react-redux';
 import axios from 'axios';
 import * as THREE from 'three';
 import * as Papa from 'papaparse';
-import { Canvas } from 'react-three-fiber';
+import { Canvas, CanvasContext } from 'react-three-fiber';
 import { useGesture } from 'react-use-gesture'
 
 import { dpi } from './config'
-import { CsvParseResult, ExpressionDataRow, Pathway, GestureData } from './core/types'
+import { CsvParseResult, ExpressionDataRow, Pathway, GestureData, MouseMoveHook, MouseMoveHooks } from './core/types'
 import {
   updateDataset, 
   setFilterDimensions, 
-  addCustomFilterDimension
+  addCustomFilterDimension,
+  setFilterValue,
 } from './store/expression-dataset/actions'
 import { updatePathways } from './store/pathways/actions'
 import Tooltip from './components/Tooltip'
@@ -25,6 +26,7 @@ const mapDispatchToProps = {
   updateDataset,
   setFilterDimensions,
   addCustomFilterDimension,
+  setFilterValue,
   updatePathways,
 };
 
@@ -37,6 +39,7 @@ function App({
   updateDataset, 
   setFilterDimensions, 
   addCustomFilterDimension,
+  setFilterValue,
   updatePathways,
 } : Partial<ConnectedProps<typeof connector>>) {
   const [ loading, setLoading ] = useState(true);
@@ -61,8 +64,10 @@ function App({
       });
       updateDataset?.(csvData.data as ExpressionDataRow[]);
       setFilterDimensions?.(
-        [ 'start_age', 'end_age', 'sex' ]
+        [ 'start_age', 'end_age', 'sex', 'tissue', 'subtissue', 'cell_ontology_class' ]
       );
+      setFilterValue?.('sex', 'male');
+      [ 'tissue', 'subtissue', 'cell_ontology_class' ].map(d => setFilterValue?.(d, ''));
       // Text column filter
       const textColumns = [
         'tissue', 'subtissue', 'cell_ontology_class', 'gene', 'uniprot_mouse', 'uniprot_daphnia'
@@ -98,35 +103,62 @@ function App({
     loadData();
   }, []);
 
-  const canvasRef = useRef(null);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const canvasCtx = useRef<CanvasContext>();
 
-  const gestureData : GestureData = {
-    dragging: false,
-    dragX: 0,
-    dragY: 0,
-    scrolling: false,
-    scrollX: 0,
-    scrollY: 0,
-    pinching: false,
-    pinchD: 0,
-    pinchA: 0,
-    pinchOrigin: [0, 0],
+  const onCanvasCreated = (ctx : CanvasContext) => {
+    canvasCtx.current = ctx;
   };
+
+  const [ gestureData, lastGestureData ] = useMemo(() => {
+    const initialState = {
+      dragging: false,
+      dragX: 0,
+      dragY: 0,
+      scrolling: false,
+      scrollX: 0,
+      scrollY: 0,
+      pinching: false,
+      pinchD: 0,
+      pinchA: 0,
+      pinchOrigin: [0, 0],
+    };
+    return [
+      JSON.parse(JSON.stringify(initialState)) as GestureData,
+      JSON.parse(JSON.stringify(initialState)) as GestureData,
+    ];
+  }, []);
+  const mouseMoveHooks : MouseMoveHooks = useMemo(() => {
+    return {
+      hooks: new Map<number, MouseMoveHook>(),
+      nextId: 0,
+    };
+  }, []);
   const bind = useGesture({
     onDrag: ({ event, last, down, movement: [mx, my] }) => {
       gestureData.dragging = down;
       gestureData.dragX = mx;
       gestureData.dragY = my;
-      if(!last)
+      if(!last || last)
         event?.preventDefault();
+      
+      if(down)
+        canvasCtx.current?.invalidate();
+      // if(down)
+      //   canvasRef.current.
     },
     onWheel: ({ event, last, down, xy: [x, y] }) => {
       // console.log('onWheel', down, x, y)
-      gestureData.scrolling = (x !== 0) || (y !== 0);
+      gestureData.scrolling = (x !== lastGestureData.scrollX) || (y !== lastGestureData.scrollY);
       gestureData.scrollX = x;
       gestureData.scrollY = y;
+      lastGestureData.scrollX = gestureData.scrollX;
+      lastGestureData.scrollY = gestureData.scrollY;
       if(!last)
         event?.preventDefault();
+        
+      if(gestureData.scrolling)
+        canvasCtx.current?.invalidate();
     },
     onPinch: ({ event, first, last, down, da: [d, a], origin }) => {
       // console.log('onPinch', d, a)
@@ -137,9 +169,18 @@ function App({
         gestureData.pinchOrigin = [ origin[0], origin[1] ];
       if(!last)
         event?.preventDefault();
+
+      if(down || last)
+        canvasCtx.current?.invalidate();
+    },
+    onMove: ({ xy: [x, y] }) => {
+      const mx = x - (canvasContainerRef.current?.offsetLeft || 0);
+      const my = y - (canvasContainerRef.current?.offsetTop || 0);
+      for(const hook of mouseMoveHooks.hooks.values())
+        hook(mx, my);
     },
   }, {
-    domTarget: canvasRef,
+    domTarget: canvasContainerRef,
     event: { passive: false },
   });
   React.useEffect(() => { bind(); }, [bind]);
@@ -148,7 +189,7 @@ function App({
     <div className="App">
       <Tooltip />
       <FilterPanel />
-      <div className="main-canvas" ref={canvasRef}>
+      <div className="main-canvas" ref={canvasContainerRef}>
         <Canvas
           // id="gl-canvas"
           camera={{
@@ -160,11 +201,13 @@ function App({
           }}
           orthographic={true}
           pixelRatio={dpi}
+          invalidateFrameloop={true}
           gl2={true}
+          onCreated={onCanvasCreated}
           // {...bind()}
         >
           <SceneController gestureData={gestureData}>
-            <Graph />
+            <Graph mouseMoveHooks={mouseMoveHooks} />
             {/* <Volcano /> */}
           </SceneController>
         </Canvas>
