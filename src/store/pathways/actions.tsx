@@ -1,4 +1,4 @@
-import { Pathway } from '../../core/types'
+import { PathwayGraphData } from '../../core/types'
 import { 
   UpdatePathwaysAction, 
   UpdatePathwaysFilterAction, 
@@ -7,7 +7,7 @@ import {
   FilterValueType,
 } from './types'
 
-export const updatePathways = (pathways : Pathway[]) : UpdatePathwaysAction => {
+export const updatePathways = (pathways : PathwayGraphData) : UpdatePathwaysAction => {
   return {
     type: UPDATE_PATHWAYS,
     pathways,

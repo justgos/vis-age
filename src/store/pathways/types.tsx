@@ -1,11 +1,11 @@
 // import crossfilter from 'crossfilter2';
-import { Pathway, PathwayNode, PathwayEdge } from '../../core/types'
+import { PathwayNode, PathwayEdge, PathwayGraphData } from '../../core/types'
 
 export type FilterValueType = string | number | boolean | undefined;
 
 export interface PathwaysState {
   lastUpdateTime : number;
-  raw : Pathway[];
+  raw : PathwayGraphData;
   nodes : PathwayNode[];
   nodeNameMap : Map<string , number>;
   edges : PathwayEdge[];
@@ -20,7 +20,7 @@ export const UPDATE_FILTER = 'UPDATE_FILTER';
 
 export interface UpdatePathwaysAction {
   type : string;
-  pathways : Pathway[];
+  pathways : PathwayGraphData;
 };
 export interface UpdatePathwaysFilterAction {
   type : string;

@@ -61,7 +61,8 @@ export const Graph = ({ mouseMoveHooks } : ObservesMouseMove) => {
   // Setup point attribute buffers
   const [ nodes, edgeMap, positions, sizes, colors, edgePositions, edgeTexcoords, simulation ] = useMemo(
     () => {
-      console.log('pathways.raw.length', pathways.raw.length);
+      console.log('pathways.nodes.length', pathways.nodes.length);
+      console.log('pathways.edges.length', pathways.edges.length);
       const nodes : GraphNode[] = [];
       const edges : GraphEdge[] = [];
       const edgeMap = new Map<number, GraphEdge[]>();
@@ -71,7 +72,7 @@ export const Graph = ({ mouseMoveHooks } : ObservesMouseMove) => {
       const edgePositions : number[] = [];
       const edgeTexcoords : number[] = [];
 
-      if(pathways.raw.length < 1) {
+      if(pathways.nodes.length < 1) {
         return [ 
           nodes,
           edgeMap,
