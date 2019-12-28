@@ -8,7 +8,6 @@ export type CustomFilterFn =
     ((v : NaturallyOrderedValue) => boolean);
 
 export interface ExpressionDatasetState {
-  lastUpdateTime : number;
   raw : ExpressionDataRow[];
   gene2idxMap : Map<string, Map<string, number>>;
   filterValues : Map<string, FilterValueType>;

@@ -16,7 +16,6 @@ import {
 } from './types'
 
 const initialState : ExpressionDatasetState = {
-  lastUpdateTime: 0,
   raw: [],
   gene2idxMap: new Map<string, Map<string, number>>(),
   filterValues: new Map<string, FilterValueType>(),
@@ -101,7 +100,6 @@ export const expressionDatasetReducer = (
 ) : ExpressionDatasetState => {
   switch(action.type) {
     case UPDATE_DATASET:
-      state.lastUpdateTime = Date.now();
       state.raw = (action as UpdateExpressionDatasetAction).dataset;
       for(let i=0; i < state.raw.length; i++) {
         const row = state.raw[i];

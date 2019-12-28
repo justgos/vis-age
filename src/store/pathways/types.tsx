@@ -4,7 +4,6 @@ import { PathwayNode, PathwayEdge, PathwayGraphData } from '../../core/types'
 export type FilterValueType = string | number | boolean | undefined;
 
 export interface PathwaysState {
-  lastUpdateTime : number;
   raw : PathwayGraphData;
   nodes : PathwayNode[];
   nodeNameMap : Map<string , number>;

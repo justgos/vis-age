@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React from 'react';
 import { connect, ConnectedProps  } from 'react-redux';
 
 import { CombinedState } from '../store'
