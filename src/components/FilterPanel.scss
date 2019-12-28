@@ -1,26 +1,56 @@
 .filter-panel {
   position: absolute;
   top: 0;
-  width: 100%;
+  left: 0;
+  width: 240px;
+  height: 100%;
   z-index: 100;
-  padding: .5rem 1rem;
+  padding: 1rem 1rem;
+  overflow-y: auto;
+  background: #fff;
+  box-shadow: 0 0 8px rgba(0,0,0,0.2);
+  text-align: left;
 
   .filter-element {
-    display: inline-block;
-    margin-left: 1rem;
-    margin-top: auto;
-    margin-bottom: auto;
+    display: block;
+    margin-top: 1rem;
+    // margin-top: auto;
+    // margin-bottom: auto;
 
-    &:first {
-      margin-left: 0;
+    &:first-child {
+      margin-top: 0;
+    }
+
+    .filter-element-label {
+      margin-bottom: .5rem;
+      font-weight: 600;
+      letter-spacing: 0.1rem;
+    }
+
+    .count {
+      float: right;
+      color: #aaa;
+    }
+  }
+
+  .bp3-radio {
+    margin-bottom: 0;
+    padding: 5px 0;
+
+    &:hover {
+      background-color: rgba(206, 221, 255, 0.4);
+    }
+
+    .bp3-control-indicator {
+      outline: none !important;
     }
   }
 
   .text-filter {
-    width: 150px;
+    // width: 150px;
   }
 
   .homolog-filter {
-    padding-left: 34px !important;
+    // padding-left: 34px !important;
   }
 }

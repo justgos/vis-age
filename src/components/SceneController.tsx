@@ -28,8 +28,8 @@ export default function SceneController({ children, gestureData } : PropsWithChi
   const viewTransform = useMemo(() => {
     return {
       x: 0,
-      y: -80 + height / 2,
-      k: 1.0,
+      y: 0,  // -80 + height / 2
+      k: 0.25,
     };
   }, []);
   const lastGestureData : GestureData = useMemo(() => {
@@ -80,8 +80,8 @@ export default function SceneController({ children, gestureData } : PropsWithChi
       lastGestureData.scrollX = gestureData.scrollX;
       lastGestureData.scrollY = gestureData.scrollY;
     } else {
-      lastGestureData.scrollX = 0;
-      lastGestureData.scrollY = 0;
+      // lastGestureData.scrollX = 0;
+      // lastGestureData.scrollY = 0;
     }
     lastGestureData.scrolling = gestureData.scrolling;
 

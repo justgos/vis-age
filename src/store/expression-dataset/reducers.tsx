@@ -71,6 +71,7 @@ const onDatasetFilterChanged = (state : ExpressionDatasetState) : ExpressionData
   if(!state.crossfilter || !state.filterDimensions)
     return state;
   for(let [ dimName, dim ] of state.filterDimensions.entries()) {
+    // TODO: re-apply filter only when the `filterValue` changes
     // Clear the applied filters
     dim.filterAll()
     let filterValue = state.filterValues.get(dimName);

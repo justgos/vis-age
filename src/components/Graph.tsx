@@ -10,7 +10,7 @@ import { store } from '../store';
 import { updateTooltip } from '../store/tooltip/actions'
 import { PointShader } from '../shaders/PointShader';
 import { GraphEdgeShader } from '../shaders/GraphEdgeShader'
-import { PathwayNode, PathwayEdge } from '../core/types';
+import { PathwayNode, PathwayEdge, ObservesMouseMove } from '../core/types';
 import { BufferAttribute } from 'three';
 
 interface GraphNode extends PathwayNode {
@@ -29,7 +29,7 @@ interface GraphEdge extends PathwayEdge {
   //
 }
 
-export const Graph = () => {
+export const Graph = ({ mouseMoveHooks } : ObservesMouseMove) => {
   const {
     mouse,
     camera,
@@ -301,6 +301,7 @@ export const Graph = () => {
 
       for(let i = 0; i < nodes.length; i++) {
         const node = nodes[i];
+        let shouldInclude = false;
         let color = neutralColor;
         let size = 1.0;
         let refExpressionRow = -1;
@@ -309,7 +310,7 @@ export const Graph = () => {
           // console.log('geneName', geneName);
           const expressionData = expressionDataset.getByGene(geneName);
           if(expressionData != null) {
-            filteredNodes.push(simNodes[i] as GraphNode);
+            shouldInclude = true;
             refExpressionRow = expressionData.__id || -1;
             let foldChange = expressionData.fold_change_log2 || 0;
             size = Math.sqrt(Math.abs(foldChange)) * 2.0;
@@ -319,6 +320,8 @@ export const Graph = () => {
               color = coldColor;
           }
         }
+        // if(shouldInclude)
+          filteredNodes.push(simNodes[i] as GraphNode);
         refExpressionRows.push(refExpressionRow);
         colors.push(...color);
         sizes.push(size);
@@ -361,9 +364,6 @@ export const Graph = () => {
     let dtime = Math.min((curTime - lastTime.value) / 1000, 0.1);
     lastTime.value = performance.now();
 
-    let mx = (mouse.x * 0.5) * width / camera.zoom + camera.position.x;
-    let my = (mouse.y * 0.5) * height / camera.zoom + camera.position.y;
-
     // Graph layout
     // if(posAttr.current && edgePosAttr.current) {
     //   const posArray = Array.from(posAttr.current.array);
@@ -391,49 +391,62 @@ export const Graph = () => {
     //   edgePosAttr.current.needsUpdate = true;
     // }
 
-    // Tooltip targeting
-    let nearest = knn(
-      pointTree, 
-      mx, 
-      my, 
-      1
-    );
-    if(nearest.length > 0) {
-      const node = nodes[(nearest[0] as GraphNode).__id];
-      if(node.__id !== lastTargetId.value) {
-        const simNode = simulation.nodes()[node.__id];
-        const refExpressionRow = refExpressionRows[node.__id]
-        const row = (refExpressionRow >= 0) ? expressionDataset.raw[refExpressionRow] : undefined;
-        // console.log('updateTooltip', row)
-        store.dispatch(updateTooltip(
-          ((simNode.x || 0) - camera.position.x) * camera.zoom + width / 2,
-          height / 2 - ((simNode.y || 0) - camera.position.y) * camera.zoom,
-          <>
-            <div className="prop">
-              <div className="name">Name</div>
-              <div className="value">{dashForNan(node.name)}</div>
-            </div>
-            <div className="prop">
-              <div className="name">Location</div>
-              <div className="value">{node.cellularLocation}</div>
-            </div>
-            <div className="prop">
-              <div className="name">log<sub>2</sub>(Fold-change)</div>
-              <div className="value" style={{ color: (row?.fold_change_log2 || 0) > 0 ? "#fb6542" : "#375e97" }}>
-                {row?.fold_change_log2?.toFixed(2)}
-              </div>
-            </div>
-            <div className="prop">
-              <div className="name">xref</div>
-              <div className="value">{node.entityReference?.xref?.db}:{node.entityReference?.xref?.id}</div>
-            </div>
-          </>
-        ));
-        lastTargetId.value = row?.__id || -1;
-      }
-      // console.log(nearest[0].gene, mx, my);
-    }
+    
   });
+
+  useEffect(() => {
+    const hookId = mouseMoveHooks.nextId++;
+    mouseMoveHooks.hooks.set(hookId, (mouseX, mouseY) => {
+      // let mx = (mouseX * 0.5) * width / camera.zoom + camera.position.x;
+      // let my = (mouseY * 0.5) * height / camera.zoom + camera.position.y;
+      let mx = (mouseX - width / 2) / camera.zoom + camera.position.x;
+      let my = (height - mouseY - height / 2) / camera.zoom + camera.position.y;
+
+      // Tooltip targeting
+      let nearest = knn(
+        pointTree, 
+        mx, 
+        my, 
+        1
+      );
+      if(nearest.length > 0) {
+        const node = nodes[(nearest[0] as GraphNode).__id];
+        if(node.__id !== lastTargetId.value) {
+          const simNode = simulation.nodes()[node.__id];
+          const refExpressionRow = refExpressionRows[node.__id]
+          const row = (refExpressionRow >= 0) ? expressionDataset.raw[refExpressionRow] : undefined;
+          // console.log('updateTooltip', row)
+          store.dispatch(updateTooltip(
+            ((simNode.x || 0) - camera.position.x) * camera.zoom + width / 2,
+            height / 2 - ((simNode.y || 0) - camera.position.y) * camera.zoom,
+            <>
+              <div className="prop">
+                <div className="name">Name</div>
+                <div className="value">{dashForNan(node.name)}</div>
+              </div>
+              <div className="prop">
+                <div className="name">Location</div>
+                <div className="value">{node.cellularLocation}</div>
+              </div>
+              <div className="prop">
+                <div className="name">log<sub>2</sub>(Fold-change)</div>
+                <div className="value" style={{ color: (row?.fold_change_log2 || 0) > 0 ? "#fb6542" : "#375e97" }}>
+                  {row?.fold_change_log2?.toFixed(2)}
+                </div>
+              </div>
+              <div className="prop">
+                <div className="name">xref</div>
+                <div className="value">{node.entityReference?.xref?.db}:{node.entityReference?.xref?.id}</div>
+              </div>
+            </>
+          ));
+          lastTargetId.value = node.__id;
+        }
+        // console.log(nearest[0].gene, mx, my);
+      }
+    });
+    return () => { mouseMoveHooks.hooks.delete(hookId); };
+  }, [pointTree]);
 
   if(positions.length < 1) {
     return (

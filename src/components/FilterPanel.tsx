@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { connect, ConnectedProps  } from 'react-redux';
-import { Classes, Checkbox, HTMLSelect } from "@blueprintjs/core";
+import { Classes, Checkbox, HTMLSelect, RadioGroup, Radio } from "@blueprintjs/core";
 
 import { ExpressionDatasetState } from '../store/expression-dataset/types'
 import { setFilterValue } from '../store/expression-dataset/actions'
@@ -31,37 +31,51 @@ type Props = PropsFromRedux & {
   //
 };
 
+const dimensionLabels : { [dimension : string] : string } = {
+  'start_age': 'Start age',
+  'end_age': 'End age',
+  'sex': 'Sex',
+  'tissue': 'Tissue',
+  'subtissue': 'Subtissue',
+  'cell_onlotology_class': 'Cell type',
+};
+
 export const FilterPanel = ({ filterValues, filterValueVocabulary, setFilterValue } : Props) => {
   return (
     <div className="filter-panel">
-      {[ 'start_age', 'end_age', 'sex' ].map(filter_param => 
-        <HTMLSelect 
-          key={filter_param}
-          className="filter-element"
-          options={[...(filterValueVocabulary.get(filter_param)?.entries() || [])].map(t => {
-            return {
-              label: `${t[0]} - ${t[1]}`,
-              value: t[0],
-            };
-          })}
-          value={filterValues.get(filter_param) as string} 
-          onChange={ evt => setFilterValue(filter_param, (evt.target as HTMLSelectElement).value) } 
-        />
-      )}
       <input 
-        className={`filter-element text-filter ${Classes.INPUT}`} 
+        className={`filter-element text-filter ${Classes.INPUT} ${Classes.MINIMAL}`} 
         type="text" 
         placeholder="filter by any text field" 
         value={filterValues.get("text") as string || ''} 
-        onChange={ evt => setFilterValue("text", evt.target.value) } 
+        onChange={ evt => setFilterValue("text", evt.currentTarget.value) } 
       />
       <Checkbox 
-        className={`filter-element homolog-filter ${Classes.BUTTON}`} 
+        className={`filter-element homolog-filter ${Classes.MINIMAL}`} 
         checked={filterValues.get("uniprot_daphnia") != null} 
-        onChange={ evt => setFilterValue("uniprot_daphnia", (evt.target as HTMLInputElement).checked ? "~" : undefined) }
+        onChange={ evt => setFilterValue("uniprot_daphnia", evt.currentTarget.checked ? "~" : undefined) }
       >
         has Daphnia homolog
       </Checkbox>
+      {[ 'start_age', 'end_age', 'sex', 'tissue' ].map(filter_param => 
+        <div key={filter_param} className="filter-element">
+          <div className="filter-element-label">
+            {dimensionLabels[filter_param]}
+          </div>
+          <RadioGroup 
+            className={`${Classes.MINIMAL}`}
+            selectedValue={filterValues.get(filter_param) as string} 
+            onChange={ evt => setFilterValue(filter_param, evt.currentTarget.value) } 
+          >
+          {[...(filterValueVocabulary.get(filter_param)?.entries() || [])].map(t => 
+            <Radio key={t[0]} value={t[0]}>
+              {t[0] !== '' ? t[0] : '<none>'}
+              <span className="count">{t[1]}</span>
+            </Radio>
+          )}
+          </RadioGroup>
+        </div>
+      )}
     </div>
   );
 };
