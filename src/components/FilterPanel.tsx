@@ -1,8 +1,7 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React from 'react';
 import { connect, ConnectedProps  } from 'react-redux';
-import { Classes, Checkbox, HTMLSelect, RadioGroup, Radio } from "@blueprintjs/core";
+import { Classes, Checkbox, RadioGroup, Radio } from "@blueprintjs/core";
 
-import { ExpressionDatasetState } from '../store/expression-dataset/types'
 import { setFilterValue } from '../store/expression-dataset/actions'
 import { CombinedState } from '../store';
 import './FilterPanel.scss';

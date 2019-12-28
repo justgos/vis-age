@@ -1,14 +1,4 @@
 // import crossfilter from 'crossfilter2';
-import {
-  PathwayEntity, 
-  Pathway, 
-  Reaction, 
-  Control, 
-  Molecule, 
-  TemplateReaction, 
-  PathwayNode,
-  Complex,
-} from '../../core/types'
 import { 
   PathwaysState, 
   PathwaysActionTypes, 
@@ -20,7 +10,6 @@ import {
 } from './types'
 
 const initialState : PathwaysState = {
-  lastUpdateTime: 0,
   raw: { nodes: [], edges: [] },
   nodes: [],
   nodeNameMap: new Map<string , number>(),
@@ -144,8 +133,8 @@ const parsePathways = (state : PathwaysState) : PathwaysState => {
   //   }
   // }
 
-  state.raw.nodes.forEach(n => state.nodes.push(n));
-  state.raw.edges.forEach(e => state.edges.push({ source: e[0], target: e[1] }));
+  state.nodes = state.raw.nodes.map(n => n);
+  state.edges = state.raw.edges.map(e => { return { source: e[0], target: e[1] } });
 
   return state;
 }
@@ -156,7 +145,6 @@ export const pathwaysReducer = (
 ) : PathwaysState => {
   switch(action.type) {
     case UPDATE_PATHWAYS:
-      state.lastUpdateTime = Date.now();
       state.raw = (action as UpdatePathwaysAction).pathways;
       state = parsePathways(state);
       return {...state};

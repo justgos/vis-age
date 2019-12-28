@@ -73,7 +73,7 @@ export const Volcano = () => {
         new RBush() 
       ];
     },
-    [expressionDataset.lastUpdateTime, expressionDataset.raw]
+    [expressionDataset.raw]
   );
   useEffect(
     () => {

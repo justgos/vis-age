@@ -31,7 +31,6 @@ interface GraphEdge extends PathwayEdge {
 
 export const Graph = ({ mouseMoveHooks } : ObservesMouseMove) => {
   const {
-    mouse,
     camera,
     size: { width, height },
   } = useThree();
@@ -184,7 +183,10 @@ export const Graph = ({ mouseMoveHooks } : ObservesMouseMove) => {
 
       for(let i = 0; i < nodes.length; i++) {
         const node = nodes[i];
-        if(node.type === 'reaction') {
+        if(node.type === 'reaction' 
+          || node.type === 'control'
+          || node.type === 'template_reaction'
+        ) {
           const adjacentEdges = edgeMap.get(node.__id);
           if(adjacentEdges && adjacentEdges.length > 0) {
             let meanLocation = adjacentEdges.map(e => 
@@ -279,7 +281,8 @@ export const Graph = ({ mouseMoveHooks } : ObservesMouseMove) => {
         simulation,
       ];
     },
-    [pathways.lastUpdateTime, pathways.nodes, pathways.edges]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pathways.nodes, pathways.edges,]
   );
 
   const [ refExpressionRows, pointTree ] = useMemo(
@@ -341,6 +344,7 @@ export const Graph = ({ mouseMoveHooks } : ObservesMouseMove) => {
         pointTree,
       ];
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [expressionDataset.filtered, colorAttr.current, sizeAttr.current]
   );
 
@@ -361,8 +365,8 @@ export const Graph = ({ mouseMoveHooks } : ObservesMouseMove) => {
   }, []);
   const dashForNan = (val : string) => (val && val !== '' && val !== 'nan') ? val : '—';
   useFrame(() => {
-    let curTime = performance.now();
-    let dtime = Math.min((curTime - lastTime.value) / 1000, 0.1);
+    // let curTime = performance.now();
+    // let dtime = Math.min((curTime - lastTime.value) / 1000, 0.1);
     lastTime.value = performance.now();
 
     // Graph layout
@@ -395,59 +399,63 @@ export const Graph = ({ mouseMoveHooks } : ObservesMouseMove) => {
     
   });
 
-  useEffect(() => {
-    const hookId = mouseMoveHooks.nextId++;
-    mouseMoveHooks.hooks.set(hookId, (mouseX, mouseY) => {
-      // let mx = (mouseX * 0.5) * width / camera.zoom + camera.position.x;
-      // let my = (mouseY * 0.5) * height / camera.zoom + camera.position.y;
-      let mx = (mouseX - width / 2) / camera.zoom + camera.position.x;
-      let my = (height - mouseY - height / 2) / camera.zoom + camera.position.y;
+  useEffect(
+    () => {
+      const hookId = mouseMoveHooks.nextId++;
+      mouseMoveHooks.hooks.set(hookId, (mouseX, mouseY) => {
+        // let mx = (mouseX * 0.5) * width / camera.zoom + camera.position.x;
+        // let my = (mouseY * 0.5) * height / camera.zoom + camera.position.y;
+        let mx = (mouseX - width / 2) / camera.zoom + camera.position.x;
+        let my = (height - mouseY - height / 2) / camera.zoom + camera.position.y;
 
-      // Tooltip targeting
-      let nearest = knn(
-        pointTree, 
-        mx, 
-        my, 
-        1
-      );
-      if(nearest.length > 0) {
-        const node = nodes[(nearest[0] as GraphNode).__id];
-        if(node.__id !== lastTargetId.value) {
-          const simNode = simulation.nodes()[node.__id];
-          const refExpressionRow = refExpressionRows[node.__id]
-          const row = (refExpressionRow >= 0) ? expressionDataset.raw[refExpressionRow] : undefined;
-          // console.log('updateTooltip', row)
-          store.dispatch(updateTooltip(
-            ((simNode.x || 0) - camera.position.x) * camera.zoom + width / 2,
-            height / 2 - ((simNode.y || 0) - camera.position.y) * camera.zoom,
-            <>
-              <div className="prop">
-                <div className="name">Name</div>
-                <div className="value">{dashForNan(node.name)}</div>
-              </div>
-              <div className="prop">
-                <div className="name">Location</div>
-                <div className="value">{node.cellularLocation}</div>
-              </div>
-              <div className="prop">
-                <div className="name">log<sub>2</sub>(Fold-change)</div>
-                <div className="value" style={{ color: (row?.fold_change_log2 || 0) > 0 ? "#fb6542" : "#375e97" }}>
-                  {row?.fold_change_log2?.toFixed(2)}
+        // Tooltip targeting
+        let nearest = knn(
+          pointTree, 
+          mx, 
+          my, 
+          1
+        );
+        if(nearest.length > 0) {
+          const node = nodes[(nearest[0] as GraphNode).__id];
+          if(node.__id !== lastTargetId.value) {
+            const simNode = simulation.nodes()[node.__id];
+            const refExpressionRow = refExpressionRows[node.__id]
+            const row = (refExpressionRow >= 0) ? expressionDataset.raw[refExpressionRow] : undefined;
+            // console.log('updateTooltip', row)
+            store.dispatch(updateTooltip(
+              ((simNode.x || 0) - camera.position.x) * camera.zoom + width / 2,
+              height / 2 - ((simNode.y || 0) - camera.position.y) * camera.zoom,
+              <>
+                <div className="prop">
+                  <div className="name">Name</div>
+                  <div className="value">{dashForNan(node.name)}</div>
                 </div>
-              </div>
-              <div className="prop">
-                <div className="name">xref</div>
-                <div className="value">{node.entityReference?.xref?.db}:{node.entityReference?.xref?.id}</div>
-              </div>
-            </>
-          ));
-          lastTargetId.value = node.__id;
+                <div className="prop">
+                  <div className="name">Location</div>
+                  <div className="value">{node.cellularLocation}</div>
+                </div>
+                <div className="prop">
+                  <div className="name">log<sub>2</sub>(Fold-change)</div>
+                  <div className="value" style={{ color: (row?.fold_change_log2 || 0) > 0 ? "#fb6542" : "#375e97" }}>
+                    {row?.fold_change_log2?.toFixed(2)}
+                  </div>
+                </div>
+                <div className="prop">
+                  <div className="name">xref</div>
+                  <div className="value">{node.entityReference?.xref?.db}:{node.entityReference?.xref?.id}</div>
+                </div>
+              </>
+            ));
+            lastTargetId.value = node.__id;
+          }
+          // console.log(nearest[0].gene, mx, my);
         }
-        // console.log(nearest[0].gene, mx, my);
-      }
-    });
-    return () => { mouseMoveHooks.hooks.delete(hookId); };
-  }, [pointTree]);
+      });
+      return () => { mouseMoveHooks.hooks.delete(hookId); };
+    }, 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pointTree]
+  );
 
   if(positions.length < 1) {
     return (

@@ -1,9 +1,7 @@
 import * as THREE from 'three'
 import React, { useMemo, useRef, PropsWithChildren } from 'react'
 import { useFrame, useThree } from 'react-three-fiber'
-import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls'
 
-import { dpi } from '../config'
 import { GestureData } from '../core/types'
 
 interface Props {
@@ -15,7 +13,6 @@ export default function SceneController({ children, gestureData } : PropsWithChi
     mouse,
     size: { width, height },
     camera,
-    gl,
   } = useThree();
 
   const [ fpsCount, lastTime, lastReportTime]  = useMemo(
@@ -108,16 +105,6 @@ export default function SceneController({ children, gestureData } : PropsWithChi
     camera.position.y = viewTransform.y;
     camera.zoom = viewTransform.k;
     camera.updateProjectionMatrix();
-
-    if(document.scrollingElement) {
-      let scrollTop = document.scrollingElement.scrollTop;
-
-      // mainLight.current.position.x = width / 2 + 200;
-      // mainLight.current.position.y = -height / 2 + 100;
-      // mainLight.current.position.y = -scrollTop;
-
-      // sceneRef.current.position.y = Math.round(scrollTop * dpi) / dpi;
-    }
   });
 
   return (

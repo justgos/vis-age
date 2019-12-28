@@ -97,6 +97,7 @@ export interface PathwayNode {
   name : string;
   cellularLocation? : string;
   entityReference? : EntityReference;
+  controlType? : string;
 }
 
 export interface PathwayEdge {
