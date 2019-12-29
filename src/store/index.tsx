@@ -5,9 +5,11 @@ import { pathwaysReducer } from './pathways/reducers'
 import { tooltipReducer } from './tooltip/reducers'
 import { TooltipState } from './tooltip/types';
 import { ExpressionDatasetState } from './expression-dataset/types';
+import { PathwaysState } from './pathways/types';
 
 export interface CombinedState {
     expressionDataset : ExpressionDatasetState;
+    pathways : PathwaysState;
     tooltip : TooltipState;
 };
 

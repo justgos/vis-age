@@ -39,7 +39,7 @@ const dimensionLabels : { [dimension : string] : string } = {
   'cell_ontology_class': 'Cell type',
 };
 
-export const FilterPanel = ({ filterValues, filterValueVocabulary, setFilterValue } : Props) => {
+function FilterPanel({ filterValues, filterValueVocabulary, setFilterValue } : Props) {
   return (
     <div className="filter-panel">
       <input 

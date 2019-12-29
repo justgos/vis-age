@@ -17,33 +17,13 @@ import {
 
 const initialState : ExpressionDatasetState = {
   raw: [],
-  gene2idxMap: new Map<string, Map<string, number>>(),
+  filteredGeneExpression: new Map<string, ExpressionDataRow>(),
   filterValues: new Map<string, FilterValueType>(),
   filterValueVocabulary: new Map<string, Map<string, number>>(),
   filterDimensionNames: [],
   customFilterFunctions: new Map<string, CustomFilterFn>(),
   filtered: [],
   raw2filtered : new Map<number, number>(),
-
-  gene2idxKey: (...parts : string[]) => {
-    return parts.join('|');
-  },
-
-  /* Returns the gene expression from a filtered data subset */
-  getByGene : function(gene? : string) {
-    if(!gene)
-      return null;
-    const key = this.gene2idxKey(
-      ...this.filterDimensionNames.map(n => this.filterValues.get(n) as string)
-    );
-    const rawIdx = this.gene2idxMap.get(key)?.get(gene);
-    if(!rawIdx || rawIdx < 0)
-      return null;
-    const filteredIdx = this.raw2filtered.get(rawIdx);
-    if(!filteredIdx || filteredIdx < 0)
-      return null;
-    return this.filtered[filteredIdx];
-  },
 }
 
 const updateFilterVocabularies = (state : ExpressionDatasetState) : ExpressionDatasetState => {
@@ -89,6 +69,14 @@ const onDatasetFilterChanged = (state : ExpressionDatasetState) : ExpressionData
   state.raw2filtered.clear();
   state.filtered.forEach((r, i) => state.raw2filtered.set(r.__id || -1, i));
 
+  state.filteredGeneExpression = new Map<string, ExpressionDataRow>();
+  for(let i=0; i < state.filtered.length; i++) {
+    const row = state.filtered[i];
+    if(row.gene) {
+      state.filteredGeneExpression.set(row.gene, row);
+    }
+  }
+
   state = updateFilterVocabularies(state);
 
   return state;
@@ -132,16 +120,6 @@ export const expressionDatasetReducer = (
           );
         // }
       });
-
-      state.gene2idxMap = new Map<string, Map<string, number>>();
-      for(let i=0; i < state.raw.length; i++) {
-        const row = state.raw[i];
-        let key = state.gene2idxKey(...state.filterDimensionNames.map(n => (row as any)[n] as string));
-        if(!state.gene2idxMap.has(key)) {
-          state.gene2idxMap.set(key, new Map<string, number>());
-        }
-        state.gene2idxMap.get(key)?.set(row.gene || '', i);
-      }
 
       state = onDatasetFilterChanged(state);
       return {...state};

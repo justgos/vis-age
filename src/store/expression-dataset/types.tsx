@@ -9,7 +9,7 @@ export type CustomFilterFn =
 
 export interface ExpressionDatasetState {
   raw : ExpressionDataRow[];
-  gene2idxMap : Map<string, Map<string, number>>;
+  filteredGeneExpression : Map<string, ExpressionDataRow>;
   filterValues : Map<string, FilterValueType>;
   filterValueVocabulary : Map<string, Map<string, number>>;
   crossfilter? : crossfilter.Crossfilter<ExpressionDataRow>;
@@ -18,9 +18,6 @@ export interface ExpressionDatasetState {
   customFilterFunctions : Map<string, CustomFilterFn>;
   filtered : ExpressionDataRow[];
   raw2filtered : Map<number, number>;
-
-  gene2idxKey : (...parts : string[]) => string;
-  getByGene : (gene? : string) => ExpressionDataRow | null;
 };
 
 export const UPDATE_DATASET = 'UPDATE_DATASET';

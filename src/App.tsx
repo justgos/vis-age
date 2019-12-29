@@ -1,13 +1,12 @@
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import axios from 'axios';
 import * as THREE from 'three';
 import * as Papa from 'papaparse';
 import { Canvas, CanvasContext } from 'react-three-fiber';
-import { useGesture } from 'react-use-gesture'
 
 import { dpi } from './config'
-import { CsvParseResult, ExpressionDataRow, GestureData, MouseMoveHook, MouseMoveHooks, PathwayGraphData } from './core/types'
+import { CsvParseResult, ExpressionDataRow, PathwayGraphData } from './core/types'
 import {
   updateDataset, 
   setFilterDimensions, 
@@ -15,12 +14,24 @@ import {
   setFilterValue,
 } from './store/expression-dataset/actions'
 import { updatePathways } from './store/pathways/actions'
-import Tooltip from './components/Tooltip'
 import FilterPanel from './components/FilterPanel'
 import SceneController from './components/SceneController'
 // import Volcano from './components/Volcano'
 import './App.scss';
 import Graph from './components/Graph';
+import TooltipController from './components/TooltipController';
+import { CombinedState } from './store';
+import { GraphEdge, GraphNode } from './store/pathways/types';
+
+const mapStateToProps = (
+  state : CombinedState
+) => {
+  return {
+    nodes: state.pathways.graph.nodes,
+    edges: state.pathways.graph.edges,
+    filteredGeneExpression: state.expressionDataset.filteredGeneExpression,
+  };
+};
 
 const mapDispatchToProps = {
   updateDataset,
@@ -31,7 +42,7 @@ const mapDispatchToProps = {
 };
 
 const connector = connect(
-  null,
+  mapStateToProps,
   mapDispatchToProps
 );
 
@@ -41,6 +52,9 @@ function App({
   addCustomFilterDimension,
   setFilterValue,
   updatePathways,
+  nodes,
+  edges,
+  filteredGeneExpression,
 } : Partial<ConnectedProps<typeof connector>>) {
   const [ loading, setLoading ] = useState(true);
   useEffect(
@@ -114,84 +128,14 @@ function App({
     canvasCtx.current = ctx;
   };
 
-  const [ gestureData, lastGestureData ] = useMemo(() => {
-    const initialState = {
-      dragging: false,
-      dragX: 0,
-      dragY: 0,
-      scrolling: false,
-      scrollX: 0,
-      scrollY: 0,
-      pinching: false,
-      pinchD: 0,
-      pinchA: 0,
-      pinchOrigin: [0, 0],
-    };
-    return [
-      JSON.parse(JSON.stringify(initialState)) as GestureData,
-      JSON.parse(JSON.stringify(initialState)) as GestureData,
-    ];
-  }, []);
-  const mouseMoveHooks : MouseMoveHooks = useMemo(() => {
-    return {
-      hooks: new Map<number, MouseMoveHook>(),
-      nextId: 0,
-    };
-  }, []);
-  const bind = useGesture({
-    onDrag: ({ event, last, down, movement: [mx, my] }) => {
-      gestureData.dragging = down;
-      gestureData.dragX = mx;
-      gestureData.dragY = my;
-      if(!last || last)
-        event?.preventDefault();
-      
-      if(down)
-        canvasCtx.current?.invalidate();
-      // if(down)
-      //   canvasRef.current.
-    },
-    onWheel: ({ event, last, down, xy: [x, y] }) => {
-      // console.log('onWheel', down, x, y)
-      gestureData.scrolling = (x !== lastGestureData.scrollX) || (y !== lastGestureData.scrollY);
-      gestureData.scrollX = x;
-      gestureData.scrollY = y;
-      lastGestureData.scrollX = gestureData.scrollX;
-      lastGestureData.scrollY = gestureData.scrollY;
-      if(!last)
-        event?.preventDefault();
-        
-      if(gestureData.scrolling)
-        canvasCtx.current?.invalidate();
-    },
-    onPinch: ({ event, first, last, down, da: [d, a], origin }) => {
-      // console.log('onPinch', d, a)
-      gestureData.pinching = down;
-      gestureData.pinchD = d;
-      gestureData.pinchA = a;
-      if(first && origin)
-        gestureData.pinchOrigin = [ origin[0], origin[1] ];
-      if(!last)
-        event?.preventDefault();
-
-      if(down || last)
-        canvasCtx.current?.invalidate();
-    },
-    onMove: ({ xy: [x, y] }) => {
-      const mx = x - (canvasContainerRef.current?.offsetLeft || 0);
-      const my = y - (canvasContainerRef.current?.offsetTop || 0);
-      for(const hook of mouseMoveHooks.hooks.values())
-        hook(mx, my);
-    },
-  }, {
-    domTarget: canvasContainerRef,
-    event: { passive: false },
-  });
-  React.useEffect(() => { bind(); }, [bind]);
-
   return (
     <div className="App">
-      <Tooltip />
+      <TooltipController {...{ 
+        nodes: nodes as GraphNode[], 
+        filteredGeneExpression: filteredGeneExpression as Map<string, ExpressionDataRow>, 
+        canvasContainerRef: canvasContainerRef as React.RefObject<HTMLDivElement>, 
+        canvasCtx: canvasCtx.current as CanvasContext,
+      }} />
       <FilterPanel />
       <div className="main-canvas" ref={canvasContainerRef}>
         <Canvas
@@ -210,8 +154,14 @@ function App({
           onCreated={onCanvasCreated}
           // {...bind()}
         >
-          <SceneController gestureData={gestureData}>
-            <Graph mouseMoveHooks={mouseMoveHooks} />
+          <SceneController {...{
+            canvasContainerRef: canvasContainerRef as React.RefObject<HTMLDivElement>,
+          }}>
+            <Graph {...{
+              nodes: nodes as GraphNode[], 
+              edges: edges as GraphEdge[], 
+              filteredGeneExpression: filteredGeneExpression as Map<string, ExpressionDataRow>,
+            }} />
             {/* <Volcano /> */}
           </SceneController>
         </Canvas>

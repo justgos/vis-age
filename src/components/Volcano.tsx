@@ -103,6 +103,7 @@ export const Volcano = () => {
         ...r 
       }}));
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [expressionDataset.filtered, sizeAttr.current]
   );
 

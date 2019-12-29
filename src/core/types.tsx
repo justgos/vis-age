@@ -1,27 +1,5 @@
-export interface GestureData {
-  dragging : boolean;
-  dragX : number;
-  dragY : number;
-  scrolling : boolean;
-  scrollX : number;
-  scrollY : number;
-  pinching : boolean;
-  pinchD : number;
-  pinchA: number;
-  pinchOrigin: [ number, number ];
-}
-
 export interface CsvParseResult {
   data : Object[];
-};
-
-export type MouseMoveHook = (x : number, y : number) => void;
-export interface MouseMoveHooks {
-  hooks: Map<number, MouseMoveHook>;
-  nextId: number;
-}
-export interface ObservesMouseMove {
-  mouseMoveHooks : MouseMoveHooks;
 };
 
 export interface ExpressionDataRow {

@@ -1,18 +1,18 @@
 import * as THREE from 'three'
-import React, { useMemo, useRef, PropsWithChildren } from 'react'
+import React, { useMemo, useRef, useEffect, PropsWithChildren } from 'react'
 import { useFrame, useThree } from 'react-three-fiber'
-
-import { GestureData } from '../core/types'
+import { useGesture } from 'react-use-gesture'
 
 interface Props {
-  gestureData : GestureData;
+  canvasContainerRef : React.RefObject<HTMLDivElement>;
 }
 
-export default function SceneController({ children, gestureData } : PropsWithChildren<Props>) {
+export default function SceneController({ children, canvasContainerRef } : PropsWithChildren<Props>) {
   const {
     mouse,
     size: { width, height },
     camera,
+    invalidate,
   } = useThree();
 
   const [ fpsCount, lastTime, lastReportTime]  = useMemo(
@@ -29,20 +29,64 @@ export default function SceneController({ children, gestureData } : PropsWithChi
       k: 0.25,
     };
   }, []);
-  const lastGestureData : GestureData = useMemo(() => {
-      return {
-      dragging: false,
-      dragX: 0,
-      dragY: 0,
-      scrolling: false,
-      scrollX: 0,
-      scrollY: 0,
-      pinching: false,
-      pinchD: 0,
-      pinchA: 0,
-      pinchOrigin: [0, 0],
-    };
-  }, []);
+  
+  function mousePos() {
+    let mx = (mouse.x * 0.5) * width / camera.zoom + camera.position.x;
+    let my = (mouse.y * 0.5) * height / camera.zoom + camera.position.y;
+    return [ mx, my ];
+  }
+  function screen2world(x : number, y : number) {
+    return [
+      (x - width * 0.5) / camera.zoom + camera.position.x,
+      (height - y - height * 0.5) / camera.zoom + camera.position.y,
+    ];
+  }
+
+  const bind = useGesture({
+    onDrag: ({ event, last, down, delta: [dx, dy] }) => {
+      if(down) {
+        viewTransform.x -= dx / viewTransform.k;
+        viewTransform.y += dy / viewTransform.k;
+        invalidate();
+      }
+      if(!last)
+        event?.preventDefault();
+    },
+    onWheel: ({ event, last, delta: [dx, dy] }) => {
+      if(dx !== 0 || dy !== 0) {
+        const [ mx, my ] = mousePos();
+        const dScale = 1.0 - 0.002 * dy;
+        viewTransform.x += (mx - viewTransform.x) * -(1.0 - dScale);
+        viewTransform.y += (my - viewTransform.y) * -(1.0 - dScale);
+
+        viewTransform.k *= dScale;
+        invalidate();
+      }
+      if(!last)
+        event?.preventDefault();
+    },
+    onPinch: ({ event, first, last, down, da: [d, a], previous: [pd, pa], origin, memo }) => {
+      if(down && !first) {
+        let dScale = d / pd;
+        viewTransform.x += (memo[0] - viewTransform.x) * -(1.0 - dScale);
+        viewTransform.y += (memo[1] - viewTransform.y) * -(1.0 - dScale);
+        viewTransform.k *= dScale;
+        invalidate();
+      }
+      if(!last)
+        event?.preventDefault();
+
+      if(first) {
+        return screen2world(origin?.[0] || 0, origin?.[1] || 0);
+      }
+      return memo;
+    },
+  }, {
+    domTarget: canvasContainerRef,
+    event: { passive: false },
+  });
+  useEffect(() => { bind(); }, [bind]);
+
   useFrame(() => {
     let curTime = performance.now();
     lastTime.value = curTime;
@@ -53,54 +97,6 @@ export default function SceneController({ children, gestureData } : PropsWithChi
         fpsCount.value = 0;
     }
 
-    let mx = (mouse.x * 0.5) * width / camera.zoom + camera.position.x;
-    let my = (mouse.y * 0.5) * height / camera.zoom + camera.position.y;
-
-    // camera.position.x = width / 2;
-    if(gestureData.dragging) {
-      viewTransform.x -= (gestureData.dragX - lastGestureData.dragX) / viewTransform.k;
-      viewTransform.y += (gestureData.dragY - lastGestureData.dragY) / viewTransform.k;
-      lastGestureData.dragX = gestureData.dragX;
-      lastGestureData.dragY = gestureData.dragY;
-    } else {
-      lastGestureData.dragX = 0;
-      lastGestureData.dragY = 0;
-    }
-    lastGestureData.dragging = gestureData.dragging;
-
-    if(gestureData.scrolling) {
-      const dScale = 1.0 - 0.002 * (gestureData.scrollY - lastGestureData.scrollY);
-      viewTransform.x += (mx - viewTransform.x) * -(1.0 - dScale);
-      viewTransform.y += (my - viewTransform.y) * -(1.0 - dScale);
-
-      viewTransform.k *= dScale;
-      lastGestureData.scrollX = gestureData.scrollX;
-      lastGestureData.scrollY = gestureData.scrollY;
-    } else {
-      // lastGestureData.scrollX = 0;
-      // lastGestureData.scrollY = 0;
-    }
-    lastGestureData.scrolling = gestureData.scrolling;
-
-    if(gestureData.pinching) {
-      if(lastGestureData.pinching) {
-        let dScale = gestureData.pinchD / lastGestureData.pinchD;
-        viewTransform.x += (lastGestureData.pinchOrigin[0] - viewTransform.x) * -(1.0 - dScale);
-        viewTransform.y += (lastGestureData.pinchOrigin[1] - viewTransform.y) * -(1.0 - dScale);
-        viewTransform.k *= dScale;
-      } else {
-        let px = (gestureData.pinchOrigin[0] - width * 0.5) / camera.zoom + camera.position.x;
-        let py = (height - gestureData.pinchOrigin[1] - height * 0.5) / camera.zoom + camera.position.y;
-        lastGestureData.pinchOrigin = [ px, py ];
-      }
-      lastGestureData.pinchD = gestureData.pinchD;
-      lastGestureData.pinchA = gestureData.pinchA;
-    } else {
-      lastGestureData.pinching = false;
-    }
-    lastGestureData.pinching = gestureData.pinching;
-    // console.log('viewTransform.k', viewTransform.k)
-    // Object.assign(lastGestureData, gestureData);
     camera.position.x = viewTransform.x;
     camera.position.y = viewTransform.y;
     camera.zoom = viewTransform.k;
