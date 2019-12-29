@@ -1,5 +1,4 @@
-import React, { useMemo, useRef } from 'react';
-import * as THREE from 'three';
+import React, { useMemo } from 'react';
 
 import { GraphEdgeShader } from '../shaders/GraphEdgeShader';
 import { BufferAttribute } from 'three';

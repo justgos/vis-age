@@ -133,8 +133,13 @@ function TooltipController({
         const selectedEdges = firstNeighbours
           .map(firstNeighbour => graph.edgeMap.get(firstNeighbour.node.__id) || [])
           .reduce((a, b) => [ ...a, ...b ], []);
+        const selectedNodes : { [key : number] : GraphNode } = {};
+        selectedEdges.forEach(e => {
+          selectedNodes[e.source] = graph.nodes[e.source];
+          selectedNodes[e.target] = graph.nodes[e.target];
+        });
         
-        updateSelection(selectedEdges);
+        updateSelection(Object.values(selectedNodes), selectedEdges);
 
         const dashForNan = (val : string) => (val && val !== '' && val !== 'nan') ? val : '—';
         setTooltipState({
