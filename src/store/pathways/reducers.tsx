@@ -6,13 +6,14 @@ import {
   // UpdatePathwaysFilterAction,  
   UPDATE_PATHWAYS,
   UPDATE_FILTER,
+  GraphEdge,
   // FilterValueType,
 } from './types'
 import { constructGraph } from './graphHelpers';
 
 const initialState : PathwaysState = {
   raw: { nodes: [], edges: [] },
-  graph: { nodes: [], edges: [] },
+  graph: { nodes: [], edges: [], edgeMap: new Map<number, GraphEdge[]>() },
   // filterValues: new Map<string, FilterValueType>(),
   // filtered: [],
 }
@@ -20,7 +21,7 @@ const initialState : PathwaysState = {
 const parsePathways = (state : PathwaysState) : PathwaysState => {
   state.graph = constructGraph(
     state.raw.nodes.map(n => n),
-    state.raw.edges.map(e => { return { source: e[0], target: e[1] } })
+    state.raw.edges.map(e => { return { source: e[0], target: e[1], relation: e[2] } })
   );
 
   return state;

@@ -81,9 +81,10 @@ export interface PathwayNode {
 export interface PathwayEdge {
   source : number;
   target : number;
+  relation : string;
 }
 
 export interface PathwayGraphData {
   nodes : PathwayNode[];
-  edges : number[][];
+  edges : [ number, number, string ][];
 }

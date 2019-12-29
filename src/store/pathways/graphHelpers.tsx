@@ -84,7 +84,11 @@ export const constructGraph = (nodeData : PathwayNode[], edgeData : PathwayEdge[
   }
 
   nodeData.forEach(n => addNode(n));
-  edgeData.forEach(e => addEdge(e));
+  edgeData.forEach(e => addEdge({
+    ...e,
+    sourcePos: [ 0, 0 ],
+    targetPos: [ 0, 0 ],
+  }));
 
   for(let i = 0; i < nodes.length; i++) {
     const node = nodes[i];
@@ -154,9 +158,15 @@ export const constructGraph = (nodeData : PathwayNode[], edgeData : PathwayEdge[
     nodes[i].maxY = n.y;
   });
 
+  edges.forEach(e => {
+    e.sourcePos = [ nodes[e.source].x, nodes[e.source].y ];
+    e.targetPos = [ nodes[e.target].x, nodes[e.target].y ];
+  });
+
   return {
-    nodes: nodes,
-    edges: edges,
+    nodes,
+    edges,
+    edgeMap,
   }
 }
 

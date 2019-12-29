@@ -6,28 +6,23 @@ export class GraphEdgeShader extends THREE.ShaderMaterial {
       vertexShader: `
         // attribute vec2 uv;
         varying vec2 texcoord;
-        // attribute vec4 color;
-        // varying vec4 vColor;
+        attribute vec4 color;
+        varying vec4 vColor;
 
         void main() {
             vec4 mvPosition = modelViewMatrix * vec4( position.xyz, 1.0 );
-            // gl_PointSize = 10.0 * size;
             gl_Position = projectionMatrix * mvPosition;
             texcoord = uv;
-            // vColor = color;
-            // if(size == 0.0)
-            //   color.w = 0.0;
+            vColor = color;
         }
       `,
       fragmentShader: `
-        // uniform sampler2D pointTexture;
         varying vec2 texcoord;
-        // varying vec4 vColor;
+        varying vec4 vColor;
         void main() {
-          // gl_FragColor = vColor * texture2D(pointTexture, gl_PointCoord);
-          gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+          gl_FragColor = vColor;
           gl_FragColor.w *= (1.0 - pow(texcoord.x, 4.0));
-          gl_FragColor.w *= 0.2;
+          // gl_FragColor.w *= 0.2;
         }
       `,
       blendSrc: THREE.SrcAlphaFactor,
