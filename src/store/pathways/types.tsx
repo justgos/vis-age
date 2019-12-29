@@ -5,9 +5,7 @@ export type FilterValueType = string | number | boolean | undefined;
 
 export interface PathwaysState {
   raw : PathwayGraphData;
-  nodes : PathwayNode[];
-  nodeNameMap : Map<string , number>;
-  edges : PathwayEdge[];
+  graph : PathwayGraph;
   // filterValues : Map<string, FilterValueType>;
   // crossfilter? : crossfilter.Crossfilter<ExpressionDataRow>;
   // filterDimensions? : Map<string, crossfilter.Dimension<ExpressionDataRow, string>>;
@@ -30,3 +28,25 @@ export interface UpdatePathwaysFilterAction {
 export type PathwaysActionTypes = 
   UpdatePathwaysAction 
   | UpdatePathwaysFilterAction;
+
+
+export interface GraphNode extends PathwayNode {
+  location : number;
+  x : number;
+  y : number;
+  vx : number;
+  vy : number;
+  minX? : number;
+  maxX? : number;
+  minY? : number;
+  maxY? : number;
+}
+
+export interface GraphEdge extends PathwayEdge {
+  //
+}
+
+export interface PathwayGraph {
+  nodes : GraphNode[];
+  edges : GraphEdge[];
+}
