@@ -43,10 +43,12 @@ export interface GraphNode extends PathwayNode {
 }
 
 export interface GraphEdge extends PathwayEdge {
-  //
+  sourcePos : [number, number];
+  targetPos : [number, number];
 }
 
 export interface PathwayGraph {
   nodes : GraphNode[];
   edges : GraphEdge[];
+  edgeMap : Map<number, GraphEdge[]>;
 }

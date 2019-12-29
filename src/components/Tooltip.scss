@@ -1,8 +1,9 @@
 .tooltip {
     position: absolute;
     padding: .5rem 1rem;
-    background: #fff;
-    border: #aaa solid 1px;
+    background: rgba(255, 255, 255, 1.0);
+    // border: #aaa solid 1px;
+    box-shadow: 0 0 4px rgba(0,0,0,0.2);
     text-align: left;
     z-index: 10000;
     pointer-events: none;
@@ -32,6 +33,10 @@
             width: 140px;
             font-weight: 600;
             color: #aaa;
+
+            .accent {
+                color: #32886f;
+            }
         }
 
         .value {

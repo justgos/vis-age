@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import axios from 'axios';
 import * as THREE from 'three';
@@ -29,7 +29,6 @@ const mapStateToProps = (
   return {
     nodes: state.pathways.graph.nodes,
     edges: state.pathways.graph.edges,
-    filteredGeneExpression: state.expressionDataset.filteredGeneExpression,
   };
 };
 
@@ -54,7 +53,6 @@ function App({
   updatePathways,
   nodes,
   edges,
-  filteredGeneExpression,
 } : Partial<ConnectedProps<typeof connector>>) {
   const [ loading, setLoading ] = useState(true);
   useEffect(
@@ -128,11 +126,14 @@ function App({
     canvasCtx.current = ctx;
   };
 
+  const displayNodes = useMemo(() => {
+    return (nodes?.filter(n => n.entityReference?.gene) || []) as GraphNode[];
+  }, [nodes]);
+
   return (
     <div className="App">
       <TooltipController {...{ 
-        nodes: nodes as GraphNode[], 
-        filteredGeneExpression: filteredGeneExpression as Map<string, ExpressionDataRow>, 
+        nodes: displayNodes, 
         canvasContainerRef: canvasContainerRef as React.RefObject<HTMLDivElement>, 
         canvasCtx: canvasCtx.current as CanvasContext,
       }} />
@@ -158,9 +159,8 @@ function App({
             canvasContainerRef: canvasContainerRef as React.RefObject<HTMLDivElement>,
           }}>
             <Graph {...{
-              nodes: nodes as GraphNode[], 
-              edges: edges as GraphEdge[], 
-              filteredGeneExpression: filteredGeneExpression as Map<string, ExpressionDataRow>,
+              nodes: displayNodes, 
+              edges: [] as GraphEdge[], 
             }} />
             {/* <Volcano /> */}
           </SceneController>

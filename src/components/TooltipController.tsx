@@ -8,6 +8,7 @@ import Tooltip from "./Tooltip";
 import RBush from 'rbush';
 import knn from 'rbush-knn';
 import { GraphNode } from '../store/pathways/types';
+import { updateSelection } from '../store/selection/actions';
 
 const mapStateToProps = (
   state : CombinedState
@@ -15,12 +16,14 @@ const mapStateToProps = (
   return {
     // pathwayGraph: state.pathways.graph,
     expressionDataset: state.expressionDataset,
+    filteredGeneExpression: state.expressionDataset.filteredGeneExpression,
+    graph: state.pathways.graph,
     // filterExpressionData: state.expressionDataset.filtered,
   };
 };
 
 const mapDispatchToProps = {
-  // setFilterValue
+  updateSelection,
 };
 
 const connector = connect(
@@ -36,10 +39,18 @@ type Props = PropsFromRedux & {
   canvasCtx : CanvasContext;
 };
 
-function TooltipController({ nodes, canvasContainerRef: canvasContainer, canvasCtx, expressionDataset } : Props) {
+function TooltipController({
+  nodes, 
+  graph,
+  canvasContainerRef, 
+  canvasCtx, 
+  expressionDataset,
+  filteredGeneExpression,
+  updateSelection,
+} : Props) {
   const [ refExpressionRows, pointTree ] = useMemo(
     () => {
-      const refExpressionRows : number[] = [];
+      const refExpressionRows = new Map<number, number>();
       const pointTree = new RBush();
       
       const filteredNodes : GraphNode[] = [];
@@ -48,19 +59,20 @@ function TooltipController({ nodes, canvasContainerRef: canvasContainer, canvasC
         const node = nodes[i];
         let shouldInclude = false;
         let refExpressionRow = -1;
-        // if(node.type === 'molecule') {
-        //   const geneName = node.entityReference?.gene?.name;
-        //   // console.log('geneName', geneName);
-        //   const expressionData = expressionDataset.getByGene(geneName);
-        //   if(expressionData != null) {
-        //     shouldInclude = true;
-        //     refExpressionRow = expressionData.__id || -1;
-        //     let foldChange = expressionData.fold_change_log2 || 0;
-        //   }
-        // }
-        // if(shouldInclude)
+        if(node.type === 'molecule') {
+          const geneName = node.entityReference?.gene?.name;
+          if(geneName) {
+            const expressionData = filteredGeneExpression.get(geneName);
+            if(expressionData != null) {
+              shouldInclude = true;
+              refExpressionRow = expressionData.__id || -1;
+              // let foldChange = expressionData.fold_change_log2 || 0;
+            }
+          }
+        }
+        if(shouldInclude)
           filteredNodes.push(nodes[i] as GraphNode);
-        refExpressionRows.push(refExpressionRow);
+        refExpressionRows.set(node.__id, refExpressionRow);
       }
 
       // pointTree.clear();
@@ -72,7 +84,7 @@ function TooltipController({ nodes, canvasContainerRef: canvasContainer, canvasC
       ];
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [expressionDataset, nodes]
+    [filteredGeneExpression, nodes]
   );
 
   const [ targetId, setTargetId ] = useState(-1);
@@ -84,8 +96,8 @@ function TooltipController({ nodes, canvasContainerRef: canvasContainer, canvasC
   });
 
   function onMouseMove(x : number, y : number) {
-    const mouseX = x - (canvasContainer.current?.offsetLeft || 0);
-    const mouseY = y - (canvasContainer.current?.offsetTop || 0);
+    const mouseX = x - (canvasContainerRef.current?.offsetLeft || 0);
+    const mouseY = y - (canvasContainerRef.current?.offsetTop || 0);
     
     const { width, height } = canvasCtx.size;
     const camera = canvasCtx.camera;
@@ -101,11 +113,29 @@ function TooltipController({ nodes, canvasContainerRef: canvasContainer, canvasC
       1
     );
     if(nearest.length > 0) {
-      const node = nodes[(nearest[0] as GraphNode).__id];
+      const node = nearest[0] as GraphNode;
       if(node.__id !== targetId) {
-        const refExpressionRow = refExpressionRows[node.__id]
-        const row = (refExpressionRow >= 0) ? expressionDataset.raw[refExpressionRow] : undefined;
+        setTargetId(node.__id)
+        const refExpressionRow = refExpressionRows.get(node.__id);
+        const row = (refExpressionRow && refExpressionRow >= 0) ? expressionDataset.raw[refExpressionRow] : undefined;
         // console.log('updateTooltip', row)
+
+        // Get depth-2 adjacent nodes
+        const firstNeighbours = Array.from(new Set(
+          (graph.edgeMap.get(node.__id) || [])
+            .map(e => {
+              return {
+                node: graph.nodes[e.source === node.__id ? e.target : e.source],
+                relation: e.relation,
+              };
+            })
+          ));
+        const selectedEdges = firstNeighbours
+          .map(firstNeighbour => graph.edgeMap.get(firstNeighbour.node.__id) || [])
+          .reduce((a, b) => [ ...a, ...b ], []);
+        
+        updateSelection(selectedEdges);
+
         const dashForNan = (val : string) => (val && val !== '' && val !== 'nan') ? val : '—';
         setTooltipState({
           active: true,
@@ -130,9 +160,16 @@ function TooltipController({ nodes, canvasContainerRef: canvasContainer, canvasC
               <div className="name">xref</div>
               <div className="value">{node.entityReference?.xref?.db}:{node.entityReference?.xref?.id}</div>
             </div>
+            {firstNeighbours.map((neighbour, i) => 
+              <div className="prop" key={i}>
+                <div className="name">
+                  <span className="accent">{neighbour.relation}</span> in
+                </div>
+                <div className="value">{neighbour.node.name}</div>
+              </div>
+            )}
           </>
         });
-        setTargetId(node.__id)
       }
     }
   }
@@ -142,7 +179,7 @@ function TooltipController({ nodes, canvasContainerRef: canvasContainer, canvasC
       onMouseMove(x, y);
     },
   }, {
-    domTarget: canvasContainer,
+    domTarget: canvasContainerRef,
     event: { passive: false },
   });
   useEffect(() => { bind(); }, [bind]);
