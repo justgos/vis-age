@@ -19,7 +19,7 @@ export const observeSelection = <P extends object>(
       super(props);
 
       this.state = {
-        selection: { selectedEdges: [] },
+        selection: { selectedNodes: [], selectedEdges: [] },
       };
     }
     handleStoreUpdate() {
@@ -32,6 +32,7 @@ export const observeSelection = <P extends object>(
       this.handleStoreUpdate();
     }
     componentWillUnmount() {
+      // Unsubscribe from the store
       this.subscription();
     }
     render() {

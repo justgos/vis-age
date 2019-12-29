@@ -31,12 +31,13 @@ export class PointShader extends THREE.ShaderMaterial {
         }
       `,
       // blendSrc: THREE.SrcAlphaFactor,
-      // blendDst: THREE.OneMinusSrcColorFactor,
+      // blendDst: THREE.OneMinusSrcAlphaFactor,
       // blending: THREE.CustomBlending,
       // blendEquation: THREE.AddEquation,
       // blending: THREE.AdditiveBlending,
+      // blending: THREE.NoBlending,
       blending: THREE.NormalBlending,
-      depthTest: false,
+      // depthTest: false,
       transparent: true,
       // vertexColors: true,
     });

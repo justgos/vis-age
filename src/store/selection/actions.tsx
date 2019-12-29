@@ -2,11 +2,15 @@ import {
   UpdateSelectionAction,
   UPDATE_SELECTION
 } from './types'
-import { GraphEdge } from '../pathways/types';
+import { GraphEdge, GraphNode } from '../pathways/types';
 
-export const updateSelection = (selectedEdges : GraphEdge[]) : UpdateSelectionAction => {
+export const updateSelection = (
+  selectedNodes : GraphNode[], 
+  selectedEdges : GraphEdge[]
+) : UpdateSelectionAction => {
   return {
     type: UPDATE_SELECTION,
+    selectedNodes,
     selectedEdges,
   }
 };
