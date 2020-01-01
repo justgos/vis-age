@@ -14,7 +14,7 @@ export interface GraphNodesProps {
 function GraphNodes({ nodes, sizes, colors } : GraphNodesProps) {
   const [ posBuf ] = useMemo(
     () => {
-      console.log('nodes.length', nodes.length);
+      // console.log('nodes.length', nodes.length);
 
       const positions : number[] = [];
       const addNode = (node : GraphNode) => {

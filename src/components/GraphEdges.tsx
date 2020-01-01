@@ -12,7 +12,7 @@ export interface GraphEdgesProps {
 function GraphEdges({ edges, color } : GraphEdgesProps) {
   const [ posBuf, uvBuf, colorBuf ] = useMemo(
     () => {
-      console.log('edges.length', edges.length);
+      // console.log('edges.length', edges.length);
       
       const positions : number[] = [];
       const uvs : number[] = [];

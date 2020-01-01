@@ -7,7 +7,7 @@ import { CombinedState } from '../store';
 import Tooltip from "./Tooltip";
 import RBush from 'rbush';
 import knn from 'rbush-knn';
-import { GraphNode } from '../store/pathways/types';
+import { GraphNode, GeneAnnotation } from '../store/pathways/types';
 import { updateSelection } from '../store/selection/actions';
 
 const mapStateToProps = (
@@ -18,6 +18,7 @@ const mapStateToProps = (
     expressionDataset: state.expressionDataset,
     filteredGeneExpression: state.expressionDataset.filteredGeneExpression,
     graph: state.pathways.graph,
+    geneAnnotations: state.pathways.geneAnnotations,
     // filterExpressionData: state.expressionDataset.filtered,
   };
 };
@@ -42,6 +43,7 @@ type Props = PropsFromRedux & {
 function TooltipController({
   nodes, 
   graph,
+  geneAnnotations,
   canvasContainerRef, 
   canvasCtx, 
   expressionDataset,
@@ -96,6 +98,10 @@ function TooltipController({
   });
 
   function onMouseMove(x : number, y : number) {
+    if(!canvasCtx) {
+      console.warn('canvasCtx not set, ignoring tooltip events');
+      return;
+    }
     const mouseX = x - (canvasContainerRef.current?.offsetLeft || 0);
     const mouseY = y - (canvasContainerRef.current?.offsetTop || 0);
     
@@ -138,10 +144,44 @@ function TooltipController({
           selectedNodes[e.source] = graph.nodes[e.source];
           selectedNodes[e.target] = graph.nodes[e.target];
         });
+
+        const geneName = node.entityReference?.gene?.name;
+        let geneAnnotation : GeneAnnotation | undefined = undefined;
+        if(geneName)
+          geneAnnotation = geneAnnotations.genes.get(geneName);
         
         updateSelection(Object.values(selectedNodes), selectedEdges);
 
-        const dashForNan = (val : string) => (val && val !== '' && val !== 'nan') ? val : '—';
+        const renderTruncatedList = <T extends any>(
+          list : T[] | undefined, 
+          itemCallback : (item : T, i : number) => JSX.Element,
+          limit : number,
+          trunctationNoticeWrapper? : (truncationNotice : JSX.Element, i : number) => JSX.Element,
+        ) => {
+          let i = 0;
+          const res = [];
+          if(list == null) {
+            res.push(<div key={0}>—</div>);
+            return res
+          }
+          while(i < list.length && i < limit) {
+            res.push(itemCallback(list[i], i));
+            i++;
+          }
+          if(i < list.length) {
+            let truncationNotice = (
+              <div className="list-truncation-notice" key={i+1}>
+                {list.length - i} more..
+              </div>
+            );
+            if(trunctationNoticeWrapper)
+              truncationNotice = trunctationNoticeWrapper(truncationNotice, i+1);
+            res.push(truncationNotice);
+          }
+          return res;
+        };
+
+        // const dashForNan = (val : string) => (val && val !== '' && val !== 'nan') ? val : '—';
         setTooltipState({
           active: true,
           x: ((node.x || 0) - camera.position.x) * camera.zoom + width / 2,
@@ -149,7 +189,7 @@ function TooltipController({
           content: <>
             <div className="prop">
               <div className="name">Name</div>
-              <div className="value">{dashForNan(node.name)}</div>
+              <div className="value">{geneName || node.name}</div>
             </div>
             <div className="prop">
               <div className="name">Location</div>
@@ -165,12 +205,25 @@ function TooltipController({
               <div className="name">xref</div>
               <div className="value">{node.entityReference?.xref?.db}:{node.entityReference?.xref?.id}</div>
             </div>
-            {firstNeighbours.map((neighbour, i) => 
+            <div className="prop">
+              <div className="name">GO terms</div>
+              <div className="value">
+                {renderTruncatedList(geneAnnotation?.go_terms, (gt, i) => 
+                  <div className="go-term" key={i}>{gt}</div>
+                , 2)}
+              </div>
+            </div>
+            {renderTruncatedList(firstNeighbours, (neighbour, i) => 
               <div className="prop" key={i}>
                 <div className="name">
                   <span className="accent">{neighbour.relation}</span> in
                 </div>
                 <div className="value">{neighbour.node.name}</div>
+              </div>
+            , 2, (truncationNotice, i) =>
+              <div className="prop" key={i}>
+                <div className="name"></div>
+                <div className="value">{truncationNotice}</div>
               </div>
             )}
           </>
@@ -183,11 +236,17 @@ function TooltipController({
     onMove: ({ xy: [x, y] }) => {
       onMouseMove(x, y);
     },
+    onTouchStart: ({ touches }) => {
+      onMouseMove(touches[0].pageX, touches[0].pageY);
+    },
+    // onClick: ({ clientX: x, clientY: y }) => {
+    //   onMouseMove(x, y);
+    // },
   }, {
     domTarget: canvasContainerRef,
     event: { passive: false },
   });
-  useEffect(() => { bind(); }, [bind]);
+  useEffect(() => { bind(); }, [bind, canvasCtx]);
 
   return (
     <Tooltip {...tooltipState} />

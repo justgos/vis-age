@@ -5,12 +5,23 @@ import {
   UPDATE_PATHWAYS, 
   UPDATE_FILTER,
   FilterValueType,
+  DehydratedPathwayGraph,
+  UPDATE_GENE_ANNOTATIONS,
+  UpdateGeneAnnotationsAction,
+  GeneAnnotation,
 } from './types'
 
-export const updatePathways = (pathways : PathwayGraphData) : UpdatePathwaysAction => {
+export const updatePathways = (pathways : PathwayGraphData | DehydratedPathwayGraph) : UpdatePathwaysAction => {
   return {
     type: UPDATE_PATHWAYS,
     pathways,
+  }
+};
+
+export const updateGeneAnnotations = (geneAnnotations : GeneAnnotation[]) : UpdateGeneAnnotationsAction => {
+  return {
+    type: UPDATE_GENE_ANNOTATIONS,
+    geneAnnotations,
   }
 };
 

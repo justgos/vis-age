@@ -1,7 +1,7 @@
 import { forceSimulation, forceManyBody, forceLink } from 'd3-force';
 
 import { PathwayNode, PathwayEdge } from '../../core/types';
-import { GraphNode, GraphEdge, PathwayGraph } from './types'
+import { GraphNode, GraphEdge, PathwayGraph, DehydratedPathwayGraph } from './types'
 
 const locationDistance = 250;
 
@@ -135,7 +135,7 @@ export const constructGraph = (nodeData : PathwayNode[], edgeData : PathwayEdge[
   simulation.stop();
 
   const simNodes = simulation.nodes();
-  let cachedPositions = JSON.parse(window.localStorage.getItem('graph/cachedPositions') || '[]');
+  let cachedPositions : any[] = []; //JSON.parse(window.localStorage.getItem('graph/cachedPositions') || '[]');
   // console.log('cachedPositions', cachedPositions)
   if(cachedPositions.length === simNodes.length) {
     // console.log('loading from cache')
@@ -146,7 +146,7 @@ export const constructGraph = (nodeData : PathwayNode[], edgeData : PathwayEdge[
   } else {
     simulation.tick(50);
     cachedPositions = simNodes.map(n => { return { x: n.x, y: n.y }; })
-    window.localStorage.setItem('graph/cachedPositions', JSON.stringify(cachedPositions));
+    // window.localStorage.setItem('graph/cachedPositions', JSON.stringify(cachedPositions));
   }
 
   simulation.nodes().forEach((n, i) => {
@@ -168,6 +168,71 @@ export const constructGraph = (nodeData : PathwayNode[], edgeData : PathwayEdge[
     edges,
     edgeMap,
   }
+}
+
+export const dehydrateGraph = (graph : PathwayGraph) : DehydratedPathwayGraph => {
+  const dehydrated : DehydratedPathwayGraph = {
+    nodes: JSON.parse(JSON.stringify(graph.nodes)),
+    edges: [],
+    dehydrated: true,
+  };
+  dehydrated.nodes.forEach(n => {
+    n.x = Math.round(n.x);
+    n.y = Math.round(n.y);
+    n.location = Math.round(n.location * 100) / 100;
+    n.vx = undefined;
+    n.vy = undefined;
+    n.minX = undefined
+    n.maxX = undefined;
+    n.minY = undefined;
+    n.maxY = undefined;
+    (n as any).index = undefined;
+  })
+  graph.edges.forEach(edge => {
+    dehydrated.edges.push([ edge.source, edge.target, edge.relation ]);
+  })
+  return dehydrated;
+}
+
+export const rehydrateGraph = (dehydrated : DehydratedPathwayGraph) : PathwayGraph => {
+  const graph : PathwayGraph = {
+    nodes: JSON.parse(JSON.stringify(dehydrated.nodes)),
+    edges: [],
+    edgeMap: new Map<number, GraphEdge[]>(),
+  }
+  graph.nodes.forEach(n => {
+    n.vx = 0;
+    n.vy = 0;
+    n.minX = n.x
+    n.maxX = n.x;
+    n.minY = n.y;
+    n.maxY = n.y;
+  })
+  dehydrated.edges.forEach(data => {
+    const edge : GraphEdge = {
+      source: data[0],
+      target: data[1],
+      relation: data[2],
+      sourcePos: [0, 0],
+      targetPos: [0, 0],
+    };
+    edge.sourcePos = [ graph.nodes[edge.source].x, graph.nodes[edge.source].y ];
+    edge.targetPos = [ graph.nodes[edge.target].x, graph.nodes[edge.target].y ];
+
+    let sourceEdges = graph.edgeMap.get(edge.source);
+    if(!sourceEdges) {
+      sourceEdges = [];
+      graph.edgeMap.set(edge.source, sourceEdges);
+    }
+    sourceEdges.push(edge);
+    let targetEdges = graph.edgeMap.get(edge.target);
+    if(!targetEdges) {
+      targetEdges = [];
+      graph.edgeMap.set(edge.target, targetEdges);
+    }
+    targetEdges.push(edge);
+  })
+  return graph;
 }
 
 /*
@@ -210,9 +275,9 @@ const structuringForce = (
     }
     for (let i = 0, n = nodes.length; i < n; ++i) {
       node = nodes[i]
-      if(xz[i] != null)
+      if(xz[i] != null && node.vx)
         node.vx += ((xz[i] as number) - node.x) * strengths[i] * alpha;
-      if(yz[i] != null)
+      if(yz[i] != null && node.vy)
         node.vy += ((yz[i] as number) - node.y) * strengths[i] * alpha;
     }
   }
