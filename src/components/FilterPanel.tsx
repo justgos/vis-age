@@ -42,13 +42,13 @@ const dimensionLabels : { [dimension : string] : string } = {
 function FilterPanel({ filterValues, filterValueVocabulary, setFilterValue } : Props) {
   return (
     <div className="filter-panel">
-      <input 
+      {/* <input 
         className={`filter-element text-filter ${Classes.INPUT} ${Classes.MINIMAL}`} 
         type="text" 
         placeholder="filter by any text field" 
         value={filterValues.get("text") as string || ''} 
         onChange={ evt => setFilterValue("text", evt.currentTarget.value) } 
-      />
+      /> */}
       <Checkbox 
         className={`filter-element homolog-filter ${Classes.MINIMAL}`} 
         checked={filterValues.get("uniprot_daphnia") != null} 

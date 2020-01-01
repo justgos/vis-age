@@ -14,6 +14,7 @@ export const observeSelection = <P extends object>(
 ) => {
   class Wrapper extends React.Component<P, State> {
     private subscription : Unsubscribe = () => {};
+    private _mounted : boolean = false;
 
     constructor(props : P) {
       super(props);
@@ -23,15 +24,19 @@ export const observeSelection = <P extends object>(
       };
     }
     handleStoreUpdate() {
+      if(!this._mounted)
+        return
       this.setState({
         selection: {...store.getState().selection},
       })
     }
     componentDidMount() {
+      this._mounted = true;
       this.subscription = store.subscribe(this.handleStoreUpdate.bind(this));
       this.handleStoreUpdate();
     }
     componentWillUnmount() {
+      this._mounted = false;
       // Unsubscribe from the store
       this.subscription();
     }

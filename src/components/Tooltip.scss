@@ -35,7 +35,7 @@
             color: #aaa;
 
             .accent {
-                color: #32886f;
+                color: #82B336;
             }
         }
 
@@ -43,6 +43,10 @@
             display: inline-block;
             width: 200px;
             margin-left: .5rem;
+
+            .list-truncation-notice {
+                color: #aaa;
+            }
         }
     }
 }

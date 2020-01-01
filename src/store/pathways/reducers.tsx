@@ -8,12 +8,18 @@ import {
   UPDATE_FILTER,
   GraphEdge,
   // FilterValueType,
+  DehydratedPathwayGraph,
+  GeneAnnotation,
+  UPDATE_GENE_ANNOTATIONS,
+  UpdateGeneAnnotationsAction,
 } from './types'
-import { constructGraph } from './graphHelpers';
+import { PathwayGraphData } from '../../core/types'
+import { constructGraph, rehydrateGraph } from './graphHelpers';
 
 const initialState : PathwaysState = {
   raw: { nodes: [], edges: [] },
   graph: { nodes: [], edges: [], edgeMap: new Map<number, GraphEdge[]>() },
+  geneAnnotations: { genes: new Map<string, GeneAnnotation>() },
   // filterValues: new Map<string, FilterValueType>(),
   // filtered: [],
 }
@@ -33,8 +39,19 @@ export const pathwaysReducer = (
 ) : PathwaysState => {
   switch(action.type) {
     case UPDATE_PATHWAYS:
-      state.raw = (action as UpdatePathwaysAction).pathways;
-      state = parsePathways(state);
+      const updatePathways = action as UpdatePathwaysAction;
+      if((updatePathways.pathways as DehydratedPathwayGraph).dehydrated) {
+        state.graph = rehydrateGraph(updatePathways.pathways as DehydratedPathwayGraph);
+      } else {
+        state.raw = updatePathways.pathways as PathwayGraphData;
+        state = parsePathways(state);
+      }
+      return {...state};
+    case UPDATE_GENE_ANNOTATIONS:
+      const updateGeneAnnotations = action as UpdateGeneAnnotationsAction;
+      state.geneAnnotations = { genes: new Map<string, GeneAnnotation>() };
+      updateGeneAnnotations.geneAnnotations.forEach(ga =>
+        state.geneAnnotations.genes.set(ga.name, ga));
       return {...state};
     case UPDATE_FILTER:
       //

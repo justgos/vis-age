@@ -102,7 +102,7 @@ const Graph = ({ nodes, edges } : Props) => {
   return (
     <>
       <GraphEdges edges={edges} color={[0, 0, 0, 0.2]} />
-      <SelectionAwareGraphEdges edges={[]} color={[50 / 255, 136 / 255, 111 / 255, 1.0]} />
+      <SelectionAwareGraphEdges edges={[]} color={[130 / 255, 179 / 255, 54 / 255, 1.0]} />
       <GraphNodes nodes={nodes} sizes={sizes} colors={colors} />
       <SelectionAwareGraphNodes nodes={[]} sizes={[]} colors={[]} />
     </>

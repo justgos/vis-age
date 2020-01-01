@@ -6,14 +6,14 @@ import * as Papa from 'papaparse';
 import { Canvas, CanvasContext } from 'react-three-fiber';
 
 import { dpi } from './config'
-import { CsvParseResult, ExpressionDataRow, PathwayGraphData } from './core/types'
+import { CsvParseResult, ExpressionDataRow } from './core/types'
 import {
   updateDataset, 
   setFilterDimensions, 
   addCustomFilterDimension,
   setFilterValue,
 } from './store/expression-dataset/actions'
-import { updatePathways } from './store/pathways/actions'
+import { updatePathways, updateGeneAnnotations } from './store/pathways/actions'
 import FilterPanel from './components/FilterPanel'
 import SceneController from './components/SceneController'
 // import Volcano from './components/Volcano'
@@ -21,7 +21,7 @@ import './App.scss';
 import Graph from './components/Graph';
 import TooltipController from './components/TooltipController';
 import { CombinedState } from './store';
-import { GraphEdge, GraphNode } from './store/pathways/types';
+import { GraphEdge, GraphNode, DehydratedPathwayGraph, GeneAnnotation } from './store/pathways/types';
 
 const mapStateToProps = (
   state : CombinedState
@@ -38,6 +38,7 @@ const mapDispatchToProps = {
   addCustomFilterDimension,
   setFilterValue,
   updatePathways,
+  updateGeneAnnotations,
 };
 
 const connector = connect(
@@ -51,6 +52,7 @@ function App({
   addCustomFilterDimension,
   setFilterValue,
   updatePathways,
+  updateGeneAnnotations,
   nodes,
   edges,
 } : Partial<ConnectedProps<typeof connector>>) {
@@ -108,8 +110,11 @@ function App({
         );
 
         // Load pathways
-        let pathways = await axios.get('./data/pathways.json');
-        updatePathways?.(pathways.data as PathwayGraphData);
+        let pathways = await axios.get('./data/pathways_preprocessed.json');
+        updatePathways?.(pathways.data as DehydratedPathwayGraph);
+        // Load gene annotations
+        let gene_annotations = await axios.get('./data/gene_annotations.json');
+        updateGeneAnnotations?.(gene_annotations.data as GeneAnnotation[]);
 
         setLoading(false);
       };
