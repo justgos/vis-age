@@ -3,10 +3,10 @@ import * as THREE from 'three';
 
 import { PointShader } from '../shaders/PointShader';
 import { BufferAttribute } from 'three';
-import { GraphNode } from '../store/pathways/types';
+import { Point } from '../core/types';
 
 export interface GraphNodesProps {
-  nodes : GraphNode[];
+  nodes : Point[];
   sizes : number[];
   colors : number[];
 }
@@ -17,7 +17,7 @@ function GraphNodes({ nodes, sizes, colors } : GraphNodesProps) {
       // console.log('nodes.length', nodes.length);
 
       const positions : number[] = [];
-      const addNode = (node : GraphNode) => {
+      const addNode = (node : Point) => {
         positions.push(
           node.x,
           node.y,

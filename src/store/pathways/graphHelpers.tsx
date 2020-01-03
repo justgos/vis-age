@@ -30,9 +30,10 @@ export const constructGraph = (nodeData : PathwayNode[], edgeData : PathwayEdge[
       } else if([ 
         'cell outer membrane',
         'cell wall',
+        'cell membrane',
         'cytoplasmic side of plasma membrane',
         'plasma membrane',
-      ].some(l => l === cellularLocation)) {
+      ].some(l => cellularLocation?.includes(l))) {
         node.location = 4;
       } else if([ 
         'mitochondrial',
@@ -44,7 +45,7 @@ export const constructGraph = (nodeData : PathwayNode[], edgeData : PathwayEdge[
       ].some(l => cellularLocation?.includes(l))) {
         node.location = 0;
       } else if([ 
-        'Golgi',
+        'golgi',
       ].some(l => cellularLocation?.includes(l))) {
         node.location = -3;
       } else if([ 
@@ -54,6 +55,9 @@ export const constructGraph = (nodeData : PathwayNode[], edgeData : PathwayEdge[
       } else if([ 
         'nuclear envelope',
         'nucleoplasm',
+        'nucleus',
+        'nucleolus',
+        'nuclear',
         'chromosome',
         'chromosome, centromeric region',
       ].some(l => cellularLocation?.includes(l))) {

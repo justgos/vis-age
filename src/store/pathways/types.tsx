@@ -1,5 +1,5 @@
 // import crossfilter from 'crossfilter2';
-import { PathwayNode, PathwayEdge, PathwayGraphData } from '../../core/types'
+import { Point, PathwayNode, PathwayEdge, PathwayGraphData } from '../../core/types'
 
 export type FilterValueType = string | number | boolean | undefined;
 
@@ -37,10 +37,8 @@ export type PathwaysActionTypes =
   | UpdatePathwaysFilterAction;
 
 
-export interface GraphNode extends PathwayNode {
+export interface GraphNode extends PathwayNode, Point {
   location : number;
-  x : number;
-  y : number;
   vx? : number;
   vy? : number;
   minX? : number;
