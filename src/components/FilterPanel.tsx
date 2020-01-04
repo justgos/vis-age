@@ -2,7 +2,7 @@ import React from 'react';
 import { connect, ConnectedProps  } from 'react-redux';
 import { Classes, Checkbox, RadioGroup, Radio } from "@blueprintjs/core";
 
-import { setFilterValue } from '../store/expression-dataset/actions'
+import { setExpressionDatasetFilterValue } from '../store/expression-dataset/actions'
 import { CombinedState } from '../store';
 import './FilterPanel.scss';
 
@@ -16,7 +16,7 @@ const mapStateToProps = (
 };
 
 const mapDispatchToProps = {
-  setFilterValue
+  setFilterValue: setExpressionDatasetFilterValue
 };
 
 const connector = connect(

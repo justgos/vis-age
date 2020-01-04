@@ -1,10 +1,30 @@
+import { SharedCanvasContext } from "react-three-fiber";
+
 export interface Point {
+  __id : number;
   x : number;
   y : number;
+  minX? : number;
+  maxX? : number;
+  minY? : number;
+  maxY? : number;
 }
 
 export interface CsvParseResult {
   data : Object[];
+};
+
+export interface CanvasReference {
+  containerRef : React.RefObject<HTMLDivElement>;
+  ctx : SharedCanvasContext;
+};
+
+export interface CellMetadata {
+  sex : string;
+  age : string;
+  tissue : string;
+  subtissue : string;
+  cellOntologyClass : string;
 };
 
 export interface ExpressionDataRow {

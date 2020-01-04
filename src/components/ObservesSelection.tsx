@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { store } from '../store';
-import { SelectionState } from '../store/selection/types';
+import { SelectionState, SelectionTarget } from '../store/selection/types';
 import { Unsubscribe } from 'redux';
 
 interface State {
@@ -20,7 +20,11 @@ export const observeSelection = <P extends object>(
       super(props);
 
       this.state = {
-        selection: { selectedNodes: [], selectedEdges: [] },
+        selection: {
+          targets: new Map<string, SelectionTarget>(),
+          selectedNodes: [], 
+          selectedEdges: [],
+        },
       };
     }
     handleStoreUpdate() {

@@ -26,7 +26,7 @@ export default function SceneController({ children, canvasContainerRef } : Props
     return {
       x: 0,
       y: 0,  // -80 + height / 2
-      k: 0.25,
+      k: 1.0,
     };
   }, []);
   

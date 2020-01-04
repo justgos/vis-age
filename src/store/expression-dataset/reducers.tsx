@@ -6,7 +6,7 @@ import {
   UpdateExpressionDatasetAction,
   SetExpressionDatasetFilterDimensionsAction,
   SetExpressionDatasetFilterValueAction,  
-  UPDATE_DATASET,
+  UPDATE_EXPRESSION_DATASET,
   SET_FILTER_DIMENSIONS,
   SET_FILTER_VALUE,
   FilterValueType,
@@ -87,7 +87,7 @@ export const expressionDatasetReducer = (
   action : ExpressionDatasetActionTypes
 ) : ExpressionDatasetState => {
   switch(action.type) {
-    case UPDATE_DATASET:
+    case UPDATE_EXPRESSION_DATASET:
       state.raw = (action as UpdateExpressionDatasetAction).dataset;
       for(let i=0; i < state.raw.length; i++) {
         const row = state.raw[i];

@@ -20,10 +20,10 @@ export interface ExpressionDatasetState {
   raw2filtered : Map<number, number>;
 };
 
-export const UPDATE_DATASET = 'UPDATE_DATASET';
-export const SET_FILTER_DIMENSIONS = 'SET_FILTER_DIMENSIONS';
-export const ADD_CUSTOM_FILTER_DIMENSION = 'ADD_CUSTOM_FILTER_DIMENSION';
-export const SET_FILTER_VALUE = 'SET_FILTER_VALUE';
+export const UPDATE_EXPRESSION_DATASET = 'UPDATE_EXPRESSION_DATASET';
+export const SET_FILTER_DIMENSIONS = 'SET_EXPRESSION_DATASET_FILTER_DIMENSIONS';
+export const ADD_CUSTOM_FILTER_DIMENSION = 'ADD_EXPRESSION_DATASET_CUSTOM_FILTER_DIMENSION';
+export const SET_FILTER_VALUE = 'SET_EXPRESSION_DATASET_FILTER_VALUE';
 
 export interface UpdateExpressionDatasetAction {
   type : string;

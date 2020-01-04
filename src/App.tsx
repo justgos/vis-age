@@ -1,18 +1,23 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import axios from 'axios';
+import protobuf from 'protobufjs';
 import * as THREE from 'three';
 import * as Papa from 'papaparse';
-import { Canvas, CanvasContext } from 'react-three-fiber';
+import { Canvas, SharedCanvasContext } from 'react-three-fiber';
 
 import { dpi } from './config'
-import { CsvParseResult, ExpressionDataRow } from './core/types'
+import { CsvParseResult, ExpressionDataRow, Point, CanvasReference, CellMetadata } from './core/types'
 import {
-  updateDataset, 
-  setFilterDimensions, 
-  addCustomFilterDimension,
-  setFilterValue,
+  updateExpressionDataset, 
+  setExpressionDatasetFilterDimensions, 
+  addExpressionDatasetCustomFilterDimension,
+  setExpressionDatasetFilterValue,
 } from './store/expression-dataset/actions'
+import {
+  setFilterDimensions,
+} from './store/datasets/actions'
+import { updateDataset } from './store/datasets/actions'
 import { updatePathways, updateGeneAnnotations } from './store/pathways/actions'
 import FilterPanel from './components/FilterPanel'
 import SceneController from './components/SceneController'
@@ -22,6 +27,8 @@ import Graph from './components/Graph';
 import TooltipController from './components/TooltipController';
 import { CombinedState } from './store';
 import { GraphEdge, GraphNode, DehydratedPathwayGraph, GeneAnnotation } from './store/pathways/types';
+import GraphNodes from './components/GraphNodes';
+import { CellEmbedding } from './components/CellEmbedding';
 
 const mapStateToProps = (
   state : CombinedState
@@ -35,8 +42,10 @@ const mapStateToProps = (
 const mapDispatchToProps = {
   updateDataset,
   setFilterDimensions,
-  addCustomFilterDimension,
-  setFilterValue,
+  updateExpressionDataset,
+  setExpressionDatasetFilterDimensions,
+  addExpressionDatasetCustomFilterDimension,
+  setExpressionDatasetFilterValue,
   updatePathways,
   updateGeneAnnotations,
 };
@@ -47,10 +56,12 @@ const connector = connect(
 );
 
 function App({
-  updateDataset, 
-  setFilterDimensions, 
-  addCustomFilterDimension,
-  setFilterValue,
+  updateDataset,
+  setFilterDimensions,
+  updateExpressionDataset, 
+  setExpressionDatasetFilterDimensions, 
+  addExpressionDatasetCustomFilterDimension,
+  setExpressionDatasetFilterValue,
   updatePathways,
   updateGeneAnnotations,
   nodes,
@@ -77,7 +88,7 @@ function App({
         //       }
         //     );
         // });
-        // updateDataset?.(csvData.data as ExpressionDataRow[]);
+        // updateExpressionDataset?.(csvData.data as ExpressionDataRow[]);
         // setFilterDimensions?.(
         //   [ 'start_age', 'end_age', 'sex', 'tissue', 'subtissue', 'cell_ontology_class' ]
         // );
@@ -116,6 +127,30 @@ function App({
         // let gene_annotations = await axios.get('./data/gene_annotations.json');
         // updateGeneAnnotations?.(gene_annotations.data as GeneAnnotation[]);
 
+        const protoDef = await axios.get('./proto/visage.proto');
+        const proto = protobuf.parse(protoDef.data).root as any;
+        
+        const cellEmbeddingsBin = await axios.get('./data/cell_embeddings.bin', { responseType: 'arraybuffer' });
+        const cellEmbeddings = proto.Coords.decode(new Uint8Array(cellEmbeddingsBin.data)).values as number[];
+        const embeddingPoints : Point[] = [];
+        for(let i = 0; i < cellEmbeddings.length; i+=2) {
+          embeddingPoints.push({
+            __id: Math.trunc(i / 2),
+            x: cellEmbeddings[i], 
+            y: cellEmbeddings[i + 1]
+          });
+        }
+        updateDataset?.('cellEmbeddings', embeddingPoints);
+
+        const cellMetadataBin = await axios.get('./data/cell_metadata.bin', { responseType: 'arraybuffer' });
+        const cellMetadata = proto.CellsMetadata.decode(new Uint8Array(cellMetadataBin.data)).cells as CellMetadata[];
+        updateDataset?.('cellMetadata', cellMetadata);
+
+        setFilterDimensions?.(
+          'cellMetadata',
+          [ 'age' ]
+        );
+
         setLoading(false);
       };
       loadData();
@@ -124,11 +159,14 @@ function App({
     []
   );
 
+  const canvases = useMemo(() => new Map<string, CanvasReference>(), []);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
-  const canvasCtx = useRef<CanvasContext>();
 
-  const onCanvasCreated = (ctx : CanvasContext) => {
-    canvasCtx.current = ctx;
+  const onCanvasCreated = (id : string, ctx : SharedCanvasContext, containerRef : React.RefObject<HTMLDivElement>) => {
+    canvases.set(id, {
+      ctx,
+      containerRef,
+    });
   };
 
   const displayNodes = useMemo(() => {
@@ -138,11 +176,9 @@ function App({
   return (
     <div className="App">
       <TooltipController {...{ 
-        nodes: displayNodes, 
-        canvasContainerRef: canvasContainerRef as React.RefObject<HTMLDivElement>, 
-        canvasCtx: canvasCtx.current as CanvasContext,
+        containerRef: canvasContainerRef
       }} />
-      <FilterPanel />
+      {/* <FilterPanel /> */}
       <div className="main-canvas" ref={canvasContainerRef}>
         <Canvas
           // id="gl-canvas"
@@ -157,16 +193,21 @@ function App({
           pixelRatio={dpi}
           invalidateFrameloop={true}
           gl2={true}
-          onCreated={onCanvasCreated}
+          onCreated={(ctx) => onCanvasCreated('embeddings', ctx, canvasContainerRef)}
           // {...bind()}
         >
           <SceneController {...{
             canvasContainerRef: canvasContainerRef as React.RefObject<HTMLDivElement>,
           }}>
-            <Graph {...{
+            <CellEmbedding 
+              id='cellEmbeddings' 
+              datasetId='cellEmbeddings' 
+              metadataDatasetId='cellMetadata'
+            />
+            {/* <Graph {...{
               nodes: displayNodes, 
               edges: [] as GraphEdge[], 
-            }} />
+            }} /> */}
             {/* <Volcano /> */}
           </SceneController>
         </Canvas>
