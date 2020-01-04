@@ -3,7 +3,7 @@ import {
   UpdateExpressionDatasetAction, 
   SetExpressionDatasetFilterDimensionsAction,
   SetExpressionDatasetFilterValueAction, 
-  UPDATE_DATASET, 
+  UPDATE_EXPRESSION_DATASET, 
   SET_FILTER_VALUE,
   FilterValueType,
   SET_FILTER_DIMENSIONS,
@@ -13,14 +13,14 @@ import {
 } from './types'
 import { NaturallyOrderedValue } from 'crossfilter2';
 
-export const updateDataset = (dataset : ExpressionDataRow[]) : UpdateExpressionDatasetAction => {
+export const updateExpressionDataset = (dataset : ExpressionDataRow[]) : UpdateExpressionDatasetAction => {
   return {
-    type: UPDATE_DATASET,
+    type: UPDATE_EXPRESSION_DATASET,
     dataset,
   }
 };
 
-export const setFilterDimensions = (
+export const setExpressionDatasetFilterDimensions = (
   dimensions : string[]
 ) : SetExpressionDatasetFilterDimensionsAction => {
   return {
@@ -29,7 +29,7 @@ export const setFilterDimensions = (
   }
 };
 
-export const addCustomFilterDimension = (
+export const addExpressionDatasetCustomFilterDimension = (
   name : string,
   selector : (row : ExpressionDataRow) => NaturallyOrderedValue,
   filterFn? : CustomFilterFn
@@ -42,7 +42,7 @@ export const addCustomFilterDimension = (
   }
 };
 
-export const setFilterValue = (name : string, value : FilterValueType) : SetExpressionDatasetFilterValueAction => {
+export const setExpressionDatasetFilterValue = (name : string, value : FilterValueType) : SetExpressionDatasetFilterValueAction => {
   return {
     type: SET_FILTER_VALUE,
     name,

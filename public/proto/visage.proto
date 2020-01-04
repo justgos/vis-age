@@ -3,3 +3,14 @@ syntax = "proto3";
 message Coords {
   repeated float values = 1;
 }
+
+message CellMetadata {
+  string age = 5;
+  string tissue = 6;
+  string subtissue = 7;
+  string cell_ontology_class = 8;
+}
+
+message CellsMetadata {
+  repeated CellMetadata cells = 1;
+}

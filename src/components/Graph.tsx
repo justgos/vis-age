@@ -46,7 +46,7 @@ const Graph = ({ nodes, edges } : Props) => {
           const expressionData = filteredGeneExpression.get(geneName);
           if(expressionData != null) {
             let foldChange = expressionData.fold_change_log2 || 0;
-            size = Math.sqrt(Math.abs(foldChange)) * 2.0;
+            size = Math.sqrt(Math.abs(foldChange)) * 2.0 * 5.0;
             if(foldChange > 0)
               color = warmColor;
             else
@@ -56,7 +56,7 @@ const Graph = ({ nodes, edges } : Props) => {
       }
       if(emphasized) {
         color = color.slice();
-        color[3] = 1.0;
+        color[3] = 5.0;
       }
       colors.push(...color);
       sizes.push(size);
