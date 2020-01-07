@@ -12,11 +12,12 @@ import {
 } from './types'
 import { NaturallyOrderedValue } from 'crossfilter2';
 
-export const updateDataset = <T extends any>(name : string, dataset : T[]) : UpdateDatasetAction<T> => {
+export const updateDataset = <T extends any>(name : string, dataset : T[], meta : any = {}) : UpdateDatasetAction<T> => {
   return {
     type: UPDATE_DATASET,
     id: name,
     dataset,
+    meta,
   }
 };
 

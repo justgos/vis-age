@@ -8,6 +8,7 @@ export type CustomFilterFn =
 
 export interface DatasetState<T> {
   raw : T[];
+  meta : any;
   filterValues : Map<string, FilterValueType>;
   filterValueVocabulary : Map<string, Map<string, number>>;
   crossfilter? : crossfilter.Crossfilter<T>;
@@ -31,6 +32,7 @@ export interface UpdateDatasetAction<T> {
   type : string;
   id : string;
   dataset : T[];
+  meta : any;
 };
 export interface SetDatasetFilterDimensionsAction {
   type : string;
