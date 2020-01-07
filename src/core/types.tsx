@@ -19,12 +19,36 @@ export interface CanvasReference {
   ctx : SharedCanvasContext;
 };
 
+export interface CellActivity {
+  values : number[];
+};
+
+export interface CellEmbeddings {
+  values : number[];
+};
+
 export interface CellMetadata {
-  sex : string;
-  age : string;
-  tissue : string;
-  subtissue : string;
-  cellOntologyClass : string;
+  sex : number;
+  age : number;
+  tissue : number;
+  subtissue : number;
+  cellOntologyClass : number;
+};
+
+export interface CellsMetadataVocabs {
+  sexVocab : string[];
+  ageVocab : string[];
+  tissueVocab : string[];
+  subtissueVocab : string[];
+  cellOntologyClassVocab : string[];
+};
+
+export interface CellsMetaMetadata extends CellsMetadataVocabs {
+  goActivities : string[];
+};
+
+export interface CellsMetadata extends CellsMetaMetadata {
+  cells : CellMetadata[];
 };
 
 export interface ExpressionDataRow {

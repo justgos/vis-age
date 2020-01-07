@@ -84,6 +84,7 @@ export const datasetsReducer = (
       const updateDataset = (action as UpdateDatasetAction<any>);
       state[updateDataset.id] = {
         raw: updateDataset.dataset,
+        meta: updateDataset.meta,
         filterValues: new Map<string, FilterValueType>(),
         filterValueVocabulary: new Map<string, Map<string, number>>(),
         filterDimensionNames: [],

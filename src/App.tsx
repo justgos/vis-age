@@ -1,13 +1,13 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import axios from 'axios';
-import protobuf from 'protobufjs';
 import * as THREE from 'three';
 import * as Papa from 'papaparse';
 import { Canvas, SharedCanvasContext } from 'react-three-fiber';
 
 import { dpi } from './config'
-import { CsvParseResult, ExpressionDataRow, Point, CanvasReference, CellMetadata } from './core/types'
+import { CsvParseResult, ExpressionDataRow, Point, CanvasReference, CellMetadata, CellsMetadata, CellsMetadataVocabs, CellEmbeddings, CellsMetaMetadata } from './core/types'
+import { loadProto } from './util/proto'
 import {
   updateExpressionDataset, 
   setExpressionDatasetFilterDimensions, 
@@ -127,11 +127,8 @@ function App({
         // let gene_annotations = await axios.get('./data/gene_annotations.json');
         // updateGeneAnnotations?.(gene_annotations.data as GeneAnnotation[]);
 
-        const protoDef = await axios.get('./proto/visage.proto');
-        const proto = protobuf.parse(protoDef.data).root as any;
-        
-        const cellEmbeddingsBin = await axios.get('./data/cell_embeddings.bin', { responseType: 'arraybuffer' });
-        const cellEmbeddings = proto.Coords.decode(new Uint8Array(cellEmbeddingsBin.data)).values as number[];
+        const cellEmbeddingsContainer = await loadProto<CellEmbeddings>('Coords', './data/cell_embeddings.bin');
+        const cellEmbeddings = cellEmbeddingsContainer.values;
         const embeddingPoints : Point[] = [];
         for(let i = 0; i < cellEmbeddings.length; i+=2) {
           embeddingPoints.push({
@@ -142,14 +139,21 @@ function App({
         }
         updateDataset?.('cellEmbeddings', embeddingPoints);
 
-        const cellMetadataBin = await axios.get('./data/cell_metadata.bin', { responseType: 'arraybuffer' });
-        const cellMetadata = proto.CellsMetadata.decode(new Uint8Array(cellMetadataBin.data)).cells as CellMetadata[];
-        updateDataset?.('cellMetadata', cellMetadata);
+        const cellsMetadata = await loadProto<CellsMetadata>('CellsMetadata', './data/cell_metadata.bin');
+        const cellsMetaMetadata : CellsMetaMetadata = {
+          sexVocab: cellsMetadata.sexVocab,
+          ageVocab: cellsMetadata.ageVocab,
+          tissueVocab: cellsMetadata.tissueVocab,
+          subtissueVocab: cellsMetadata.subtissueVocab,
+          cellOntologyClassVocab: cellsMetadata.cellOntologyClassVocab,
+          goActivities: cellsMetadata.goActivities,
+        };
+        updateDataset?.('cellMetadata', cellsMetadata.cells, cellsMetaMetadata);
 
-        setFilterDimensions?.(
-          'cellMetadata',
-          [ 'age' ]
-        );
+        // setFilterDimensions?.(
+        //   'cellMetadata',
+        //   [ 'age' ]
+        // );
 
         setLoading(false);
       };
@@ -178,7 +182,7 @@ function App({
       <TooltipController {...{ 
         containerRef: canvasContainerRef
       }} />
-      {/* <FilterPanel /> */}
+      <FilterPanel />
       <div className="main-canvas" ref={canvasContainerRef}>
         <Canvas
           // id="gl-canvas"
@@ -203,6 +207,7 @@ function App({
               id='cellEmbeddings' 
               datasetId='cellEmbeddings' 
               metadataDatasetId='cellMetadata'
+              goActivityDatasetId='goActivity'
             />
             {/* <Graph {...{
               nodes: displayNodes, 

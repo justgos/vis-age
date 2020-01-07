@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { connect, ConnectedProps  } from 'react-redux';
+import axios from 'axios';
 import { Classes, Checkbox, RadioGroup, Radio } from "@blueprintjs/core";
 
 import { setExpressionDatasetFilterValue } from '../store/expression-dataset/actions'
 import { CombinedState } from '../store';
 import './FilterPanel.scss';
+import { CellsMetaMetadata, CellActivity } from '../core/types';
+import { updateDataset } from '../store/datasets/actions';
+import { loadProto } from '../util/proto';
 
 const mapStateToProps = (
   state : CombinedState
@@ -12,11 +16,13 @@ const mapStateToProps = (
   return {
     filterValues: state.expressionDataset.filterValues,
     filterValueVocabulary: state.expressionDataset.filterValueVocabulary,
+    cellMetaMetadata: state.datasets['cellMetadata']?.meta as CellsMetaMetadata,
   };
 };
 
 const mapDispatchToProps = {
-  setFilterValue: setExpressionDatasetFilterValue
+  setFilterValue: setExpressionDatasetFilterValue,
+  updateDataset: updateDataset,
 };
 
 const connector = connect(
@@ -39,7 +45,25 @@ const dimensionLabels : { [dimension : string] : string } = {
   'cell_ontology_class': 'Cell type',
 };
 
-function FilterPanel({ filterValues, filterValueVocabulary, setFilterValue } : Props) {
+function FilterPanel({
+  filterValues, 
+  filterValueVocabulary, 
+  cellMetaMetadata, 
+  setFilterValue,
+  updateDataset,
+} : Props) {
+  const [ goActivity, setGOActivity ] = useState(-1);
+  const changeGOActivity = async (id : number) => {
+    setGOActivity(id);
+    if(id >= 0) {
+      const goActivity = await loadProto<CellActivity>('Activity', './data/go-activity/' + id + '.bin');
+      updateDataset?.('goActivity', goActivity.values);
+      console.log('goActivity.values', goActivity.values)
+    } else {
+      updateDataset?.('goActivity', []);
+    }
+  };
+
   return (
     <div className="filter-panel">
       {/* <input 
@@ -56,6 +80,23 @@ function FilterPanel({ filterValues, filterValueVocabulary, setFilterValue } : P
       >
         has Daphnia homolog
       </Checkbox>
+      {cellMetaMetadata && <div className="filter-element">
+        <div className="filter-element-label">
+          GO activities
+        </div>
+        <RadioGroup 
+          className={`${Classes.MINIMAL}`}
+          selectedValue={goActivity} 
+          onChange={ evt => changeGOActivity(parseInt(evt.currentTarget.value)) } 
+        >
+        <Radio value={-1}>&lt;none&gt;</Radio>
+        {cellMetaMetadata.goActivities.map((ga, i) => 
+          <Radio key={i} value={i}>
+            {ga}
+          </Radio>
+        )}
+        </RadioGroup>
+      </div>}
       {[ 'start_age', 'end_age', 'sex', 'tissue', 'subtissue', 'cell_ontology_class' ].map(filter_param => 
         <div key={filter_param} className="filter-element">
           <div className="filter-element-label">
