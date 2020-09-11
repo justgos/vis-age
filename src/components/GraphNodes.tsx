@@ -21,7 +21,7 @@ function GraphNodes({ nodes, sizes, colors } : GraphNodesProps) {
         positions.push(
           node.x,
           node.y,
-          0
+          node.z || 0,
         );
       };
 

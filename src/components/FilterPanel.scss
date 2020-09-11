@@ -11,6 +11,24 @@
   box-shadow: 0 0 8px rgba(0,0,0,0.2);
   text-align: left;
 
+  .project-description {
+    h3 {
+      font-size: 1.5em;
+      font-weight: normal;
+      margin: 0;
+      margin-bottom: 8px;
+    }
+
+    .mode-label {
+      margin-top: 16px;
+      font-weight: 700;
+    }
+
+    .mode-select {
+      margin: 8px 0;
+    }
+  }
+
   .filter-element {
     display: block;
     margin-top: 1rem;

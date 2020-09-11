@@ -22,12 +22,19 @@ export default function SceneController({ children, canvasContainerRef } : Props
   );
   const sceneRef = useRef();
   const mainLight = useRef();
-  const viewTransform = useMemo(() => {
-    return {
-      x: 0,
-      y: 0,  // -80 + height / 2
-      k: 1.0,
-    };
+  const [ targetTransform, viewTransform ] = useMemo(() => {
+    return [
+      new THREE.Vector3(),
+      {
+        x: 0,
+        y: 0,  // -80 + height / 2
+        z: 0,
+        // k: 1.0,
+        k: 0.25,
+        vec: new THREE.Vector3(),
+        spherical: new THREE.Spherical(),
+      },
+    ];
   }, []);
   
   function mousePos() {
@@ -43,14 +50,25 @@ export default function SceneController({ children, canvasContainerRef } : Props
   }
 
   const bind = useGesture({
-    onDrag: ({ event, last, down, delta: [dx, dy] }) => {
-      if(down) {
+    onDrag: ({ event, last, down, delta: [dx, dy], buttons, touches }) => {
+      if(down && (buttons === 1 || touches === 1)) {
+        // const sensitivity = 0.005;
+        // viewTransform.spherical.theta -= dx / viewTransform.k * sensitivity;
+        // viewTransform.spherical.phi -= dy / viewTransform.k * sensitivity;
+        // viewTransform.spherical.radius = 1000 / viewTransform.k;
+        // viewTransform.spherical.makeSafe();
+        // viewTransform.vec.setFromSpherical(viewTransform.spherical);
+        // targetTransform.x -= Math.cos(dx / viewTransform.k) - Math.sin(dy / viewTransform.k);
+        // targetTransform.y += ;
         viewTransform.x -= dx / viewTransform.k;
         viewTransform.y += dy / viewTransform.k;
         invalidate();
       }
       if(!last)
         event?.preventDefault();
+
+      if(down)
+        invalidate();
     },
     onWheel: ({ event, last, delta: [dx, dy] }) => {
       if(dx !== 0 || dy !== 0) {
@@ -58,8 +76,10 @@ export default function SceneController({ children, canvasContainerRef } : Props
         const dScale = 1.0 - 0.002 * dy;
         viewTransform.x += (mx - viewTransform.x) * -(1.0 - dScale);
         viewTransform.y += (my - viewTransform.y) * -(1.0 - dScale);
-
         viewTransform.k *= dScale;
+        // viewTransform.spherical.radius = 1000 / viewTransform.k;
+        // viewTransform.spherical.makeSafe();
+        // viewTransform.vec.setFromSpherical(viewTransform.spherical);
         invalidate();
       }
       if(!last)
@@ -71,7 +91,10 @@ export default function SceneController({ children, canvasContainerRef } : Props
         viewTransform.x += (memo[0] - viewTransform.x) * -(1.0 - dScale);
         viewTransform.y += (memo[1] - viewTransform.y) * -(1.0 - dScale);
         viewTransform.k *= dScale;
-        invalidate();
+        // viewTransform.spherical.radius = 1000 / viewTransform.k;
+        // viewTransform.spherical.makeSafe();
+        // viewTransform.vec.setFromSpherical(viewTransform.spherical);
+        // invalidate();
       }
       if(!last)
         event?.preventDefault();
@@ -97,6 +120,11 @@ export default function SceneController({ children, canvasContainerRef } : Props
         fpsCount.value = 0;
     }
 
+    // console.log('viewTransform.vec', viewTransform.vec)
+    // camera.position.set(viewTransform.vec.x, viewTransform.vec.y, viewTransform.vec.z);
+    // camera.rotation.x = viewTransform.spherical.phi;
+    // camera.rotation.y = viewTransform.spherical.theta;
+    // camera.lookAt(targetTransform);
     camera.position.x = viewTransform.x;
     camera.position.y = viewTransform.y;
     camera.zoom = viewTransform.k;

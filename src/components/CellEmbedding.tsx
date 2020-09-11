@@ -45,7 +45,7 @@ export const CellEmbedding = ({ id, datasetId, metadataDatasetId, goActivityData
     () => {
       if(cellEmbeddings) {
         store.dispatch(updateTarget(
-          id, 
+          'primary', 
           // cellEmbeddings.raw.filter((p, i) => cellMetadata ? (cellMetadata.raw as CellMetadata[])[i].age === '3m' : true), 
           cellEmbeddings.raw,
           ctx,
