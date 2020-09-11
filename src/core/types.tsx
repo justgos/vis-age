@@ -4,6 +4,7 @@ export interface Point {
   __id : number;
   x : number;
   y : number;
+  z? : number;
   minX? : number;
   maxX? : number;
   minY? : number;

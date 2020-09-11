@@ -43,6 +43,8 @@
             display: inline-block;
             width: 200px;
             margin-left: .5rem;
+            overflow: hidden;
+            // word-break: break-all;
 
             .list-truncation-notice {
                 color: #aaa;
