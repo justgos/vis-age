@@ -1,6 +1,6 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "3c0b8eb6e1040f7e5eb351e0a0f7c722",
+    "revision": "19441412e10e8ee191d375c4e0cb4a3f",
     "url": "/vis-age/index.html"
   },
   {
@@ -8,8 +8,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/vis-age/static/css/2.1a6d2955.chunk.css"
   },
   {
-    "revision": "93ddee98e562aefbebea",
-    "url": "/vis-age/static/css/main.a668dcae.chunk.css"
+    "revision": "6464e4815d1a0c1f5f95",
+    "url": "/vis-age/static/css/main.91a27049.chunk.css"
   },
   {
     "revision": "f9fe054fb6a03e7602f7",
@@ -20,7 +20,7 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/vis-age/static/js/2.3fc8859f.chunk.js.LICENSE"
   },
   {
-    "revision": "93ddee98e562aefbebea",
+    "revision": "6464e4815d1a0c1f5f95",
     "url": "/vis-age/static/js/main.8b855771.chunk.js"
   },
   {

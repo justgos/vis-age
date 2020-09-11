@@ -1,6 +1,6 @@
 {
   "files": {
-    "main.css": "/vis-age/static/css/main.a668dcae.chunk.css",
+    "main.css": "/vis-age/static/css/main.91a27049.chunk.css",
     "main.js": "/vis-age/static/js/main.8b855771.chunk.js",
     "main.js.map": "/vis-age/static/js/main.8b855771.chunk.js.map",
     "runtime-main.js": "/vis-age/static/js/runtime-main.bfe59450.js",
@@ -9,17 +9,17 @@
     "static/js/2.3fc8859f.chunk.js": "/vis-age/static/js/2.3fc8859f.chunk.js",
     "static/js/2.3fc8859f.chunk.js.map": "/vis-age/static/js/2.3fc8859f.chunk.js.map",
     "index.html": "/vis-age/index.html",
-    "precache-manifest.de6a80eebb24d2df7de9cb552ddf354e.js": "/vis-age/precache-manifest.de6a80eebb24d2df7de9cb552ddf354e.js",
+    "precache-manifest.bc60747fd017107e3d475f2d4f7f5430.js": "/vis-age/precache-manifest.bc60747fd017107e3d475f2d4f7f5430.js",
     "service-worker.js": "/vis-age/service-worker.js",
     "static/css/2.1a6d2955.chunk.css.map": "/vis-age/static/css/2.1a6d2955.chunk.css.map",
-    "static/css/main.a668dcae.chunk.css.map": "/vis-age/static/css/main.a668dcae.chunk.css.map",
+    "static/css/main.91a27049.chunk.css.map": "/vis-age/static/css/main.91a27049.chunk.css.map",
     "static/js/2.3fc8859f.chunk.js.LICENSE": "/vis-age/static/js/2.3fc8859f.chunk.js.LICENSE"
   },
   "entrypoints": [
     "static/js/runtime-main.bfe59450.js",
     "static/css/2.1a6d2955.chunk.css",
     "static/js/2.3fc8859f.chunk.js",
-    "static/css/main.a668dcae.chunk.css",
+    "static/css/main.91a27049.chunk.css",
     "static/js/main.8b855771.chunk.js"
   ]
 }
