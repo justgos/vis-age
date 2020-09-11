@@ -3,3 +3,25 @@ syntax = "proto3";
 message Coords {
   repeated float values = 1;
 }
+
+message Activity {
+  repeated int32 values = 1;
+}
+
+message CellMetadata {
+  int32 sex = 4;
+  int32 age = 5;
+  int32 tissue = 6;
+  int32 subtissue = 7;
+  int32 cell_ontology_class = 8;
+}
+
+message CellsMetadata {
+  repeated CellMetadata cells = 1;
+  repeated string sex_vocab = 10;
+  repeated string age_vocab = 11;
+  repeated string tissue_vocab = 12;
+  repeated string subtissue_vocab = 13;
+  repeated string cell_ontology_class_vocab = 14;
+  repeated string go_activities = 20;
+}
