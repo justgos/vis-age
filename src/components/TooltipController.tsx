@@ -282,12 +282,34 @@ function TooltipController({
     }
   }
 
+  const touchState = useMemo(() => ({
+    nTouches: 0,
+    lastTouchPos: [0, 0],
+    touchStartPos: [0, 0],
+  }), []);
+
   const bind = useGesture({
     onMove: ({ xy: [x, y] }) => {
       onMouseMove(x, y);
     },
     onTouchStart: ({ touches }) => {
-      onMouseMove(touches[0].pageX, touches[0].pageY);
+      if(touchState.nTouches === 0)
+        touchState.touchStartPos = [ touches[0].pageX, touches[0].pageY ]
+      touchState.nTouches = Math.max(touchState.nTouches, touches.length);
+      touchState.lastTouchPos = [ touches[0].pageX, touches[0].pageY ];
+    },
+    onTouchMove: ({ touches }) => {
+      touchState.lastTouchPos = [ touches[0].pageX, touches[0].pageY ];
+    },
+    onTouchEnd: ({ touches }) => {
+      const maxMoveDist = 5;
+      if(touchState.nTouches === 1
+        && Math.abs(touchState.touchStartPos[0] - touchState.lastTouchPos[0]) <= maxMoveDist
+        && Math.abs(touchState.touchStartPos[1] - touchState.lastTouchPos[1]) <= maxMoveDist
+      )
+        onMouseMove(touchState.lastTouchPos[0], touchState.lastTouchPos[1]);
+      if(touches.length < 1)
+        touchState.nTouches = 0;
     },
     // onClick: ({ clientX: x, clientY: y }) => {
     //   onMouseMove(x, y);
@@ -296,7 +318,7 @@ function TooltipController({
     domTarget: containerRef,
     event: { passive: false },
   });
-  useEffect(() => { bind(); }, [bind, containerRef]);
+  useEffect(() => { bind(); }, [bind, containerRef, pointTrees]);
 
   return (
     <Tooltip {...tooltipState} />
