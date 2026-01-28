@@ -26,7 +26,7 @@
     "d3-force": "^2.0.1",
     "mathjs": "^6.2.5",
     "node-sass": "^4.13.0",
-    "papaparse": "^5.1.0",
+    "papaparse": "^5.2.0",
     "protobufjs": "^6.8.8",
     "rbush": "^3.0.1",
     "rbush-knn": "^2.1.0",
